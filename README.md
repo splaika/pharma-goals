@@ -13,6 +13,22 @@
 
 ---
 
+## 🔗 デモページ（動くデモをブラウザで開く）
+
+ビルド不要でそのまま触れる **1枚の自己完結HTML** のデモを [`demo/`](demo/) に同梱しています。
+
+- **公開デモURL（GitHub Pages）** — 👉 **https://splaika.github.io/pharma-goals/demo/**
+  <br>※ 初回のみ有効化が必要です。リポジトリの **Settings → Pages** で
+  Source = `Deploy from a branch`、Branch = `main` / `/(root)` を指定して Save すると、
+  上記URLで公開されます（反映に1〜2分）。
+- **すぐ確認したいとき（Pages不要）** — [htmlpreview で開く](https://htmlpreview.github.io/?https://raw.githubusercontent.com/splaika/pharma-goals/main/demo/index.html)
+- **ローカルで開く** — [`demo/index.html`](demo/index.html) をブラウザでダブルクリックするだけ
+
+> デモはブラウザ内のダミーデータで動作し、リロードで初期状態に戻ります。
+> セットアップや共有方法の詳細は [`demo/README.md`](demo/README.md) を参照してください。
+
+---
+
 ## 1. モックデータでローカル起動（最短）
 
 ```bash

@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharma Goals · MVP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#002060; --blue:#238CC5; --blue-soft:#EAF3FA;
+    --ink:#101B2D; --ink-2:#46556B; --ink-3:#8A98AC; --ink-4:#B9C3D1;
+    --line:#E6ECF3; --line-2:#F1F5F9; --bg:#F7F9FC; --white:#fff;
+    --green:#1C8A5B; --green-bg:#E5F4EC;
+    --amber:#A9760F; --amber-bg:#FAF0DA;
+    --red:#C0392B; --red-bg:#FBE8E5;
+    --sh:0 1px 2px rgba(16,27,45,.04); --sh-2:0 10px 30px rgba(16,27,45,.12);
+    --r:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
+  body.ja{font-family:'Noto Sans JP','IBM Plex Sans',sans-serif}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  input,select,textarea{font-family:inherit}
+  [data-ja]{display:none}
+  body.ja [data-en]{display:none}
+  body.ja [data-ja]{display:inline}
+
+  .app{display:grid;grid-template-columns:212px 1fr;height:100vh}
+
+  /* sidebar */
+  .side{background:var(--navy);color:#fff;display:flex;flex-direction:column}
+  .brand{padding:22px 20px 18px;display:flex;align-items:center;gap:11px}
+  .brand .m{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--blue),#6fc0ec);display:grid;place-items:center;font-weight:700}
+  .brand b{font-size:15px}
+  .brand span{display:block;font-size:10.5px;color:#9db4d6;font-weight:400}
+  .nav{padding:6px 12px;flex:1}
+  .nav a{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:9px;color:#c6d4ea;font-weight:500;font-size:14px;margin-bottom:3px;transition:.14s}
+  .nav a svg{width:18px;height:18px;opacity:.85}
+  .nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+  .nav a.on{background:var(--blue);color:#fff}
+  .nav a.on svg{opacity:1}
+  .sfoot{padding:16px 18px;border-top:1px solid rgba(255,255,255,.1);display:flex;gap:10px;align-items:center}
+  .sfoot .a{width:30px;height:30px;border-radius:50%;background:#3a6aa3;display:grid;place-items:center;font-weight:600;font-size:12px}
+  .sfoot .n{font-size:12.5px;font-weight:500}.sfoot .r{font-size:10.5px;color:#9db4d6}
+
+  /* main */
+  .main{display:flex;flex-direction:column;min-width:0}
+  .top{height:60px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 26px;gap:16px;flex:none}
+  .top h1{font-size:16px;font-weight:600}
+  .top .sp{flex:1}
+  .lang{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .lang button{padding:7px 13px;font-size:12px;font-weight:600;color:var(--ink-3)}
+  .lang button.on{background:var(--navy);color:#fff}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;font-weight:600;font-size:13px;transition:.14s;white-space:nowrap}
+  .btn svg{width:15px;height:15px}
+  .btn-p{background:var(--blue);color:#fff}.btn-p:hover{background:#1e7cb1}
+  .btn-g{border:1px solid var(--line);color:var(--ink-2);background:#fff}.btn-g:hover{background:var(--line-2);border-color:var(--ink-4)}
+
+  .scroll{flex:1;overflow-y:auto;padding:28px 32px}
+  .view{display:none}.view.on{display:block;animation:f .22s ease}
+  @keyframes f{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .vh{margin-bottom:22px}
+  .vh .t{font-size:22px;font-weight:700;letter-spacing:-.3px}
+  .vh .s{color:var(--ink-3);font-size:13px;margin-top:4px}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh)}
+  .kpi .l{font-size:11.5px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .kpi .v{font-size:32px;font-weight:700;margin-top:8px;letter-spacing:-1px}
+  .kpi .v small{font-size:16px;color:var(--ink-4)}
+  .kpi .m{font-size:12px;color:var(--ink-3);margin-top:2px}
+  .kpi.hl{border-top:3px solid var(--blue)}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+  .card-h{padding:16px 20px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between}
+  .card-h h3{font-size:14px;font-weight:600}
+  .card-h .tag{font-size:11.5px;color:var(--ink-3)}
+
+  /* status bar / pills */
+  .bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--blue),#62b6e4);transition:width .45s cubic-bezier(.4,0,.2,1)}
+  .bar.g>i{background:linear-gradient(90deg,#23a06b,#46c08a)}
+  .bar.a>i{background:linear-gradient(90deg,#cf9426,#e6b653)}
+  .bar.r>i{background:linear-gradient(90deg,#d3564b,#e6877d)}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .g{color:var(--green);background:var(--green-bg)} .a{color:var(--amber);background:var(--amber-bg)} .r{color:var(--red);background:var(--red-bg)}
+
+  /* dept summary table */
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--line-2)}
+  .tbl td{padding:13px 20px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl .nm{font-weight:600}
+  .tbl .pcell{display:flex;align-items:center;gap:10px;min-width:150px}
+  .tbl .pcell .bar{flex:1}
+  .tbl .pcell b{font-size:12.5px;min-width:34px;text-align:right}
+  .stcell{display:flex;align-items:center;gap:11px}
+  .sbar{height:8px;border-radius:5px;overflow:hidden;display:flex;background:var(--line);width:120px;flex:none}
+  .sbar i{height:100%}
+  .sbar i.g{background:#23a06b}.sbar i.a{background:#d99a2b}.sbar i.r{background:#d3564b}
+  .stnum{font-size:12.5px;display:inline-flex;gap:9px}
+  .stnum b{font-weight:600}
+  .stnum .cg{color:var(--green)}.stnum .ca{color:var(--amber)}.stnum .cr{color:var(--red)}
+
+  /* filter bar */
+  .filters{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:14px 16px;display:flex;align-items:center;gap:18px;margin-bottom:18px;flex-wrap:wrap}
+  .fg{display:flex;align-items:center;gap:9px}
+  .fg>label{font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px}
+  .seg{display:flex;background:var(--line-2);border-radius:9px;padding:3px}
+  .seg button{padding:7px 13px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--ink-2);transition:.12s}
+  .seg button.on{background:#fff;color:var(--navy);box-shadow:var(--sh)}
+  select.sel{padding:8px 30px 8px 12px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-weight:600;color:var(--ink);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A98AC' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center;-webkit-appearance:none;appearance:none;cursor:pointer}
+  .fsp{flex:1}
+  .fcount{font-size:12.5px;color:var(--ink-3);font-weight:500}
+
+  /* goal list / tree */
+  .glist{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+  .grow{display:grid;grid-template-columns:1fr 168px 116px 96px;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line-2);cursor:pointer;transition:.12s}
+  .grow:last-child{border-bottom:none}
+  .grow:hover{background:var(--blue-soft)}
+  .gh{display:grid;grid-template-columns:1fr 168px 116px 96px;gap:14px;padding:11px 20px;background:var(--line-2);font-size:11px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px}
+  .gname{display:flex;align-items:center;gap:10px;min-width:0}
+  .tog{width:20px;height:20px;flex:none;display:grid;place-items:center;border-radius:6px;color:var(--ink-3)}
+  .tog:hover{background:var(--line)}.tog svg{width:13px;height:13px;transition:.18s}
+  .tog.leaf{visibility:hidden}.tog.open svg{transform:rotate(90deg)}
+  .lvl{font-size:9.5px;font-weight:700;padding:2.5px 7px;border-radius:6px;letter-spacing:.4px;flex:none}
+  .lc{background:var(--navy);color:#fff}.ld{background:var(--blue);color:#fff}.lt{background:#7aa6c9;color:#fff}.li{background:var(--line);color:var(--ink-2)}
+  .gtx{min-width:0}.gtx b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gtx small{font-size:11.5px;color:var(--ink-3)}
+  .gtx small.nolink{color:var(--amber)}
+  .own{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);min-width:0}
+  .own .a{width:25px;height:25px;border-radius:50%;background:#d2e2f0;color:var(--navy);display:grid;place-items:center;font-size:10px;font-weight:600;flex:none}
+  .own span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gp{display:flex;align-items:center;gap:9px}.gp .bar{flex:1}.gp b{font-size:12.5px;min-width:32px;text-align:right}
+  .children{display:none}.node.open>.children{display:block}
+  .empty{padding:46px;text-align:center;color:var(--ink-4);font-size:13px}
+
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(8,18,36,.34);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:460px;max-width:94vw;background:#fff;box-shadow:var(--sh-2);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:50;display:flex;flex-direction:column}
+  .drawer.on{transform:none}
+  .dh{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+  .dh .x{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--ink-3);flex:none}.dh .x:hover{background:var(--line-2)}
+  .dh-t{flex:1;min-width:0}
+  .dh-t input.title{font-size:18px;font-weight:700;border:none;width:100%;padding:2px 0;border-bottom:1.5px solid transparent;color:var(--ink)}
+  .dh-t input.title:focus{outline:none;border-bottom-color:var(--blue)}
+  .db{flex:1;overflow-y:auto;padding:22px 24px}
+  .fld{margin-bottom:22px}
+  .fld>label{display:block;font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .drawer select.sel,.drawer input.tin{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font-size:13px;background-color:#fff}
+  .drawer input.tin:focus,.drawer select.sel:focus{outline:none;border-color:var(--blue)}
+  .stseg{display:flex;gap:8px}
+  .stseg button{flex:1;padding:10px;border:1px solid var(--line);border-radius:9px;font-size:12.5px;font-weight:600;color:var(--ink-3)}
+  .stseg button.on.sg{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+  .stseg button.on.sa{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+  .stseg button.on.sr{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+
+  /* monthly */
+  .mo{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-2)}
+  .mo:last-child{border-bottom:none}
+  .mo .mk{font-size:11.5px;font-weight:700;color:var(--navy);min-width:54px;padding-top:2px}
+  .mo .mb{flex:1}
+  .mo .mr{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+  .mo .mr .bar{flex:1}.mo .mr b{font-size:12px;min-width:30px;text-align:right}
+  .mo .mc{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+  .mo .mc.none{color:var(--ink-4)}
+  .addmo{background:var(--blue-soft);border-radius:11px;padding:15px 16px;margin-top:6px}
+  .addmo .hd{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:11px}
+  .addmo .rr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .addmo .rr label{font-size:12px;color:var(--ink-2);min-width:60px}
+  .addmo input[type=range]{flex:1;accent-color:var(--blue)}
+  .addmo b{font-size:13px;min-width:38px;text-align:right;color:var(--navy)}
+  .addmo textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;resize:vertical;min-height:54px}
+  .addmo textarea:focus{outline:none;border-color:var(--blue)}
+
+  .df{padding:15px 24px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center}
+  /* change history */
+  .logl{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-2)}
+  .logl:last-child{border-bottom:none}
+  .logl .a{width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:600;flex:none}
+  .logl .lt{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+  .logl .lt .kind{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--blue);background:var(--blue-soft);padding:2px 6px;border-radius:5px}
+  .logl .lt .note{color:var(--ink)}
+  .logl .lm{font-size:10.5px;color:var(--ink-4);margin-top:3px}
+  .df .del{color:var(--red);font-weight:600;font-size:12.5px;padding:9px 12px;border-radius:9px}.df .del:hover{background:var(--red-bg)}
+  .df .sp{flex:1}
+
+  /* report */
+  .rep-top{display:flex;gap:14px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .rep{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+  .rep-hd{padding:22px 26px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fbfdff,#fff)}
+  .rep-hd .ti{font-size:19px;font-weight:700}
+  .rep-hd .me{font-size:13px;color:var(--ink-3);margin-top:4px}
+  .rep-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--line)}
+  .rep-stats .st{padding:18px 24px;border-right:1px solid var(--line-2)}
+  .rep-stats .st:last-child{border-right:none}
+  .rep-stats .l{font-size:11px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .rep-stats .v{font-size:26px;font-weight:700;margin-top:6px;letter-spacing:-.5px}
+  .rep-stats .v .seg-mini{display:inline-flex;gap:5px;font-size:13px;font-weight:600}
+  .rep-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  .rep-tbl th{position:sticky;top:0;background:var(--line-2);text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-3);font-weight:700;padding:10px 12px;white-space:nowrap}
+  .rep-tbl td{padding:11px 12px;border-bottom:1px solid var(--line-2);vertical-align:top}
+  .rep-tbl .mcol{text-align:center;font-variant-numeric:tabular-nums;color:var(--ink-2);min-width:42px}
+  .rep-tbl .mcol.cur{font-weight:700;color:var(--navy)}
+  .rep-tbl .gn{font-weight:600;max-width:230px}
+  .rep-tbl .cm{color:var(--ink-2);max-width:240px;font-size:12px}
+  .rep-scroll{overflow-x:auto}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(18px);background:var(--navy);color:#fff;padding:12px 22px;border-radius:11px;font-size:13px;font-weight:500;box-shadow:var(--sh-2);opacity:0;pointer-events:none;transition:.24s;z-index:80;display:flex;gap:9px;align-items:center}
+  .toast.on{opacity:1;transform:translateX(-50%)}
+  .toast svg{width:16px;height:16px;color:#7fe0a8}
+  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#ccd6e2;border-radius:6px;border:2px solid var(--bg)}
+
+  @media print{
+    .side,.top,.rep-top{display:none!important}
+    .app{display:block}.scroll{overflow:visible;padding:0}
+    .view{display:none!important}#view-report.on{display:block!important}
+    .rep{border:none;box-shadow:none}
+    body{height:auto;overflow:visible}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="m"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="#fff"/></svg></div><div><b>Pharma Goals</b></div></div>
+    <nav class="nav">
+      <a class="on" data-view="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span data-en>Overview</span><span data-ja>サマリー</span></a>
+      <a data-view="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="3" y="17" width="6" height="5" rx="1"/><rect x="15" y="17" width="6" height="5" rx="1"/><path d="M12 7v4M6 17v-3h12v3"/></svg><span data-en>Goals</span><span data-ja>目標</span></a>
+      <a data-view="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"/></svg><span data-en>Report</span><span data-ja>レポート</span></a>
+    </nav>
+    <div class="sfoot"><div class="a">KT</div><div><div class="n">Kenji Takahashi</div><div class="r" data-en>Data Science</div><div class="r" data-ja>データサイエンス部</div></div></div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <h1 id="ttl">Overview</h1>
+      <div class="sp"></div>
+      <div class="lang"><button id="en" class="on">EN</button><button id="ja">JA</button></div>
+      <button class="btn btn-p" id="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg><span data-en>Add goal</span><span data-ja>目標を追加</span></button>
+    </header>
+
+    <div class="scroll">
+
+      <!-- Overview -->
+      <section class="view on" id="view-overview">
+        <div class="vh"><div class="t" data-en>Performance overview</div><div class="t" data-ja>パフォーマンス サマリー</div>
+          <div class="s" data-en>FY2026 · all goals across the company</div><div class="s" data-ja>2026年度 · 全社の目標</div></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="card">
+          <div class="card-h"><h3 data-en>By department</h3><h3 data-ja>部門別</h3>
+            <span class="tag" data-en>health &amp; freshness</span><span class="tag" data-ja>状態と更新状況</span></div>
+          <table class="tbl"><thead><tr>
+            <th><span data-en>Department</span><span data-ja>部門</span></th>
+            <th><span data-en>Goals</span><span data-ja>目標数</span></th>
+            <th><span data-en>Status mix</span><span data-ja>状態</span></th>
+            <th><span data-en>Updated this mo.</span><span data-ja>今月更新</span></th>
+          </tr></thead><tbody id="deptTbl"></tbody></table>
+        </div>
+      </section>
+
+      <!-- Goals -->
+      <section class="view" id="view-goals">
+        <div class="vh"><div class="t" data-en>Goals</div><div class="t" data-ja>目標</div>
+          <div class="s" data-en>Filter by department and level, then open any goal to log monthly progress.</div>
+          <div class="s" data-ja>部門・レベルで絞り込み、目標を開いて月次進捗を記録します。</div></div>
+        <div class="filters" id="filtersGoals"></div>
+        <div class="glist" id="goalList"></div>
+      </section>
+
+      <!-- Report -->
+      <section class="view" id="view-report">
+        <div class="rep-top">
+          <div class="filters" id="filtersReport" style="margin:0;flex:1"></div>
+          <button class="btn btn-g" id="csvBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span data-en>Download CSV</span><span data-ja>CSV出力</span></button>
+          <button class="btn btn-p" id="printBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg><span data-en>Print</span><span data-ja>印刷</span></button>
+        </div>
+        <div class="rep" id="repBody"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="dh">
+    <div class="dh-t"><input class="title" id="dTitle" placeholder="Goal name"><div style="margin-top:8px"><span class="lvl" id="dLvlBadge">IND</span></div></div>
+    <button class="x" id="dClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="db" id="dBody"></div>
+  <div class="df">
+    <button class="del" id="dDel"><span data-en>Delete</span><span data-ja>削除</span></button>
+    <div class="sp"></div>
+    <button class="btn btn-g" id="dCancel"><span data-en>Cancel</span><span data-ja>キャンセル</span></button>
+    <button class="btn btn-p" id="dSave"><span data-en>Save</span><span data-ja>保存</span></button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastTx"></span></div>
+
+<script>
+/* ===== reference data ===== */
+const MONTHS=['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
+const CUR='2026-06';
+const moLabel=(m)=>{const n=+m.split('-')[1];return document.body.classList.contains('ja')?n+'月':['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][n-1];};
+const DEPTS=[
+  {id:'ds', en:'Data Science', ja:'データサイエンス部'},
+  {id:'co', en:'Clinical Operations', ja:'臨床開発部'},
+  {id:'ra', en:'Regulatory Affairs', ja:'薬事部'},
+  {id:'pv', en:'Pharmacovigilance', ja:'安全性部'},
+  {id:'co_co', en:'Company-wide', ja:'全社'},
+];
+const deptName=(id)=>{const d=DEPTS.find(x=>x.id===id);return d?T(d.en,d.ja):id;};
+
+/* ===== goals =====
+   parent:null  => a root (allowed at any level, incl. dept/team with no company link)
+   monthly: [[month, pct, en, ja], ...] direct progress + one-line comment per month
+*/
+let seq=200; const uid=p=>p+(++seq);
+const G=[
+  // Company
+  {id:'c1',parent:null,level:'company',dept:'co_co',en:'Launch MGT-006 in Japan',ja:'MGT-006 日本上市',owner:'Board',av:'BD',status:'a',
+    monthly:[['2026-03',30,'Program kickoff complete.','プログラム始動完了。'],['2026-04',38,'Filing plan locked.','申請計画を確定。'],['2026-05',46,'Site readiness on track.','施設準備は順調。'],['2026-06',52,'CTD assembly underway.','CTD編集が進行中。']]},
+  {id:'c2',parent:null,level:'company',dept:'co_co',en:'Strengthen data & safety capability',ja:'データ・安全性能力の強化',owner:'Board',av:'BD',status:'g',
+    monthly:[['2026-04',40,'Investment approved.','投資承認。'],['2026-05',58,'Hiring ahead of plan.','採用が計画前倒し。'],['2026-06',66,'Platform pilot live.','基盤パイロット稼働。']]},
+
+  // Data Science dept — a ROOT with no company link (allowed)
+  {id:'ds1',parent:null,level:'dept',dept:'ds',en:'Build clinical data platform',ja:'臨床データ基盤の構築',owner:'Data Science',av:'DS',status:'g',
+    monthly:[['2026-02',20,'Architecture agreed.','アーキテクチャ合意。'],['2026-03',34,'Dataverse model built.','Dataverseモデル構築。'],['2026-04',50,'First pipelines live.','初期パイプライン稼働。'],['2026-05',62,'2 trials onboarded.','2試験を取込み。'],['2026-06',71,'Self-service dashboards out.','セルフサービスDB提供開始。']]},
+  {id:'ds2',parent:'c2',level:'dept',dept:'ds',en:'Embed analytics in trial ops',ja:'治験オペへの分析組込み',owner:'Data Science',av:'DS',status:'a',
+    monthly:[['2026-04',28,'Use cases scoped.','ユースケース整理。'],['2026-05',40,'Pilot with 1 study.','1試験で試行。'],['2026-06',47,'Adoption slower than planned.','定着が想定より遅い。']]},
+  // DS teams
+  {id:'ds_t1',parent:'ds1',level:'team',dept:'ds',en:'Data engineering team',ja:'データエンジニアリングチーム',owner:'Eng team',av:'DE',status:'g',
+    monthly:[['2026-03',30,'Ingestion framework done.','取込基盤完成。'],['2026-04',52,'EDC connector built.','EDCコネクタ構築。'],['2026-05',64,'Latency targets met.','遅延目標を達成。'],['2026-06',76,'8 sources integrated.','8ソース連携。']]},
+  {id:'ds_t2',parent:'ds1',level:'team',dept:'ds',en:'Visualization team',ja:'可視化チーム',owner:'Viz team',av:'VZ',status:'g',
+    monthly:[['2026-04',35,'Design system set.','デザイン基盤確立。'],['2026-05',55,'5 dashboards shipped.','5DB提供。'],['2026-06',68,'User training started.','利用者研修開始。']]},
+  // DS individuals
+  {id:'ds_i1',parent:'ds_t1',level:'individual',dept:'ds',en:'Integrate signal data sources',ja:'シグナルデータ連携',owner:'Kenji Takahashi',av:'KT',status:'a',
+    monthly:[['2026-04',25,'2 of 8 sources connected.','8中2ソース接続。'],['2026-05',38,'Access approvals delayed.','アクセス承認が遅延。'],['2026-06',50,'5 of 8 connected.','8中5ソース接続。']],
+    log:[{t:'Jun 5, 09:12',who:'KT',kind:'updated',note:'Access approvals granted for 3 more sources.'},{t:'May 2, 16:40',who:'KT',kind:'created',note:''}]},
+  {id:'ds_i2',parent:'ds_t1',level:'individual',dept:'ds',en:'Automate KR data refresh',ja:'KRデータ自動更新',owner:'Lin Chen',av:'LC',status:'g',
+    monthly:[['2026-05',48,'Refresh job built.','更新ジョブ構築。'],['2026-06',72,'Auto-update for 12 KRs.','12KRを自動更新化。']]},
+  {id:'ds_i3',parent:'ds_t2',level:'individual',dept:'ds',en:'Ship enrollment dashboard',ja:'登録進捗ダッシュボード',owner:'Kenji Takahashi',av:'KT',status:'g',
+    monthly:[['2026-04',40,'Mockups approved.','モック承認。'],['2026-05',60,'v1 released.','v1リリース。'],['2026-06',82,'Adopted by 3 studies.','3試験で利用。']],
+    log:[{t:'Jun 1, 11:05',who:'KT',kind:'updated',note:'Rolled out to the third study team.'}]},
+  {id:'ds_i4',parent:'ds_t2',level:'individual',dept:'ds',en:'Standardize KPI definitions',ja:'KPI定義の標準化',owner:'Sara Okada',av:'SO',status:'g',
+    monthly:[['2026-05',50,'Draft glossary done.','用語集ドラフト完成。'],['2026-06',70,'Reviewed by 4 depts.','4部門でレビュー。']]},
+
+  // Clinical Ops
+  {id:'co1',parent:'c1',level:'dept',dept:'co',en:'Complete Phase III enrollment',ja:'第III相 組入完了',owner:'Clinical Ops',av:'CO',status:'a',
+    monthly:[['2026-03',45,'180 of 240 enrolled.','240中180登録。'],['2026-04',55,'200 enrolled.','200登録。'],['2026-05',62,'Pace below target.','ペースが目標未達。'],['2026-06',70,'215 enrolled.','215登録。']]},
+  {id:'co_t1',parent:'co1',level:'team',dept:'co',en:'Site activation team',ja:'施設立上げチーム',owner:'Site team',av:'SI',status:'g',
+    monthly:[['2026-04',60,'22 of 25 sites live.','25中22施設稼働。'],['2026-05',80,'24 sites live.','24施設稼働。'],['2026-06',96,'All 25 sites live.','全25施設稼働。']]},
+  {id:'co_i1',parent:'co_t1',level:'individual',dept:'co',en:'Reduce screen-fail rate',ja:'スクリーニング失敗率の低減',owner:'Aoi Mori',av:'AM',status:'a',
+    monthly:[['2026-04',30,'Failures at 18%.','失敗率18%。'],['2026-05',45,'Down to 15%.','15%へ低減。'],['2026-06',55,'At 14%, target 12%.','14%、目標12%。']]},
+
+  // Regulatory Affairs
+  {id:'ra1',parent:'c1',level:'dept',dept:'ra',en:'Secure MGT-006 approval',ja:'MGT-006 承認取得',owner:'Reg Affairs',av:'RA',status:'a',
+    monthly:[['2026-03',25,'Pre-submission meeting held.','事前面談を実施。'],['2026-04',35,'Module 2 drafting.','モジュール2起草中。'],['2026-05',44,'9 of 12 sections drafted.','12中9セクション起草。'],['2026-06',52,'QC reviews ongoing.','QCレビュー進行中。']]},
+  {id:'ra_i1',parent:'ra1',level:'individual',dept:'ra',en:'Respond to PMDA queries',ja:'PMDA照会対応',owner:'Aoi Mori',av:'AM',status:'g',
+    monthly:[['2026-05',70,'10 of 15 answered.','15中10回答。'],['2026-06',92,'14 of 15 answered.','15中14回答。']]},
+
+  // Pharmacovigilance — dept ROOT, no company link
+  {id:'pv1',parent:null,level:'dept',dept:'pv',en:'Modernize pharmacovigilance',ja:'PV体制の刷新',owner:'PV',av:'PV',status:'r',
+    monthly:[['2026-04',18,'SOP review started.','SOP見直し開始。'],['2026-05',24,'Vendor selection slipped.','ベンダー選定が遅延。'],['2026-06',30,'1 of 6 SOPs updated.','6中1SOP改訂。']]},
+  {id:'pv_i1',parent:'pv1',level:'individual',dept:'pv',en:'Clear case backlog',ja:'症例バックログ解消',owner:'Sara Okada',av:'SO',status:'g',
+    monthly:[['2026-04',50,'420 cases pending.','420症例滞留。'],['2026-05',72,'120 pending.','120滞留。'],['2026-06',90,'20 pending.','20滞留。']]},
+];
+
+/* ===== helpers ===== */
+const byId=id=>G.find(g=>g.id===id);
+const kids=id=>G.filter(g=>g.parent===id);
+const T=(en,ja)=>document.body.classList.contains('ja')?ja:en;
+const latest=g=>{ for(let i=MONTHS.length-1;i>=0;i--){const e=g.monthly.find(m=>m[0]===MONTHS[i]); if(e)return e;} return null; };
+const progressOf=g=>{const e=latest(g);return e?e[1]:0;};
+const monthEntry=(g,m)=>g.monthly.find(x=>x[0]===m);
+const lvlInfo={company:['CO','lc','Company','全社'],dept:['DEPT','ld','Department','部門'],team:['TEAM','lt','Team','チーム'],individual:['IND','li','Individual','個人']};
+const stInfo={g:['On track','順調'],a:['At risk','注意'],r:['Off track','遅延']};
+
+/* ===== filter state (shared by Goals + Report) ===== */
+const filter={dept:'all',level:'all',view:'cascade'};
+function filtered(){
+  return G.filter(g=>(filter.dept==='all'||g.dept===filter.dept)&&(filter.level==='all'||g.level===filter.level));
+}
+function buildFilters(elId,withView){
+  const el=document.getElementById(elId);
+  const depts=[['all',T('All departments','全部門')]].concat(DEPTS.map(d=>[d.id,T(d.en,d.ja)]));
+  const lvls=[['all','All','すべて'],['company','Company','全社'],['dept','Dept','部門'],['team','Team','チーム'],['individual','Individual','個人']];
+  el.innerHTML=`
+    <div class="fg"><label data-en>Department</label><label data-ja>部門</label>
+      <select class="sel" data-f="dept">${depts.map(d=>`<option value="${d[0]}" ${filter.dept===d[0]?'selected':''}>${d[1]}</option>`).join('')}</select></div>
+    <div class="fg"><label data-en>Level</label><label data-ja>粒度</label>
+      <div class="seg" data-f="level">${lvls.map(l=>`<button data-v="${l[0]}" class="${filter.level===l[0]?'on':''}">${T(l[1],l[2])}</button>`).join('')}</div></div>
+    ${withView?`<div class="fg"><label data-en>View</label><label data-ja>表示</label>
+      <div class="seg" data-f="view">
+        <button data-v="cascade" class="${filter.view==='cascade'?'on':''}">${T('Cascade','カスケード')}</button>
+        <button data-v="list" class="${filter.view==='list'?'on':''}">${T('List','リスト')}</button></div></div>`:''}
+    <div class="fsp"></div><div class="fcount" id="${elId}_count"></div>`;
+  const filterApplied=()=>{if(filter.dept!=='all'||filter.level!=='all')filter.view='list';};
+  el.querySelector('[data-f="dept"]').onchange=e=>{filter.dept=e.target.value;filterApplied();renderGoals();renderReport();syncFilters();};
+  el.querySelectorAll('[data-f="level"] button').forEach(b=>b.onclick=()=>{filter.level=b.dataset.v;filterApplied();renderGoals();renderReport();syncFilters();});
+  if(withView)el.querySelectorAll('[data-f="view"] button').forEach(b=>b.onclick=()=>{filter.view=b.dataset.v;renderGoals();syncFilters();});
+}
+function syncFilters(){buildFilters('filtersGoals',true);buildFilters('filtersReport',false);updateCounts();}
+function updateCounts(){
+  const n=filtered().length;
+  ['filtersGoals_count','filtersReport_count'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=`${n} ${T('goals','件')}`;});
+}
+
+/* ===== Overview ===== */
+function renderOverview(){
+  const all=G;
+  const onTrack=all.filter(g=>g.status==='g').length;
+  const atRisk=all.filter(g=>g.status!=='g').length;
+  const avg=Math.round(all.reduce((s,g)=>s+progressOf(g),0)/all.length);
+  const k=[
+    {l:T('Total goals','目標数'),v:all.length,m:T('4 levels, 4 departments','4階層・4部門'),hl:true},
+    {l:T('Avg progress','平均進捗'),v:avg+'<small>%</small>',m:T('latest month','当月時点')},
+    {l:T('On track','順調'),v:onTrack,m:T('green status','緑ステータス')},
+    {l:T('Needs attention','要対応'),v:atRisk,m:T('at risk / off track','注意・遅延')},
+  ];
+  document.getElementById('kpis').innerHTML=k.map(x=>`<div class="kpi ${x.hl?'hl':''}"><div class="l">${x.l}</div><div class="v">${x.v}</div><div class="m">${x.m}</div></div>`).join('');
+  const rows=DEPTS.map(d=>{
+    const gs=G.filter(g=>g.dept===d.id); if(!gs.length)return'';
+    const total=gs.length;
+    const g_=gs.filter(x=>x.status==='g').length,a_=gs.filter(x=>x.status==='a').length,r_=gs.filter(x=>x.status==='r').length;
+    const updated=gs.filter(x=>monthEntry(x,CUR)).length;
+    const pc=n=>n/total*100;
+    return `<tr><td class="nm">${T(d.en,d.ja)}</td><td>${total}</td>
+      <td><div class="stcell">
+        <div class="sbar">${g_?`<i class="g" style="width:${pc(g_)}%"></i>`:''}${a_?`<i class="a" style="width:${pc(a_)}%"></i>`:''}${r_?`<i class="r" style="width:${pc(r_)}%"></i>`:''}</div>
+        <span class="stnum">${g_?`<b class="cg">${g_}</b>`:''}${a_?`<b class="ca">${a_}</b>`:''}${r_?`<b class="cr">${r_}</b>`:''}</span>
+      </div></td>
+      <td><b style="font-size:13.5px">${updated}</b><span style="color:var(--ink-3)"> / ${total}</span></td></tr>`;
+  }).join('');
+  document.getElementById('deptTbl').innerHTML=rows;
+}
+
+/* ===== Goals view ===== */
+let openSet=new Set(['c1','c2','ds1','ds2','co1','ra1','pv1','ds_t1','ds_t2','co_t1']);
+function goalRow(g,depth,clickable){
+  const li=lvlInfo[g.level], p=progressOf(g);
+  const ch=kids(g.id), inTree=filter.view==='cascade'&&filter.level==='all'&&filter.dept==='all';
+  const open=openSet.has(g.id);
+  const hasParent=g.parent!=null;
+  const note = g.level!=='individual' ? (hasParent?`${T('rolls up to','上位')}: ${T(byId(g.parent).en,byId(g.parent).ja)}`:T('top-level (no parent)','最上位（上位なし）')) : T(g.owner,g.owner);
+  const noteCls = (!hasParent&&g.level!=='individual')?'nolink':'';
+  return `<div class="node ${open?'open':''}" data-node="${g.id}">
+    <div class="grow" data-row="${g.id}">
+      <div class="gname" style="padding-left:${inTree?depth*22:0}px">
+        ${inTree?`<button class="tog ${ch.length?'':'leaf'} ${open?'open':''}" data-tog="${g.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m9 6 6 6-6 6"/></svg></button>`:''}
+        <span class="lvl ${li[1]}">${li[0]}</span>
+        <div class="gtx"><b>${T(g.en,g.ja)}</b><small class="${noteCls}">${note}</small></div>
+      </div>
+      <div class="own"><span class="a">${g.av}</span><span>${g.level==='individual'?T(g.owner,g.owner):deptName(g.dept)}</span></div>
+      <div class="gp"><div class="bar ${g.status}"><i style="width:${p}%"></i></div><b>${p}%</b></div>
+      <div><span class="pill ${g.status}">${T(stInfo[g.status][0],stInfo[g.status][1])}</span></div>
+    </div>
+    ${inTree&&ch.length?`<div class="children">${ch.map(c=>goalRow(c,depth+1,clickable)).join('')}</div>`:''}
+  </div>`;
+}
+function renderGoals(){
+  const el=document.getElementById('goalList');
+  const head=`<div class="gh"><span>${T('Goal','目標')}</span><span>${T('Owner','担当')}</span><span>${T('Progress','進捗')}</span><span>${T('Status','状態')}</span></div>`;
+  const inTree=filter.view==='cascade'&&filter.level==='all'&&filter.dept==='all';
+  let body;
+  if(inTree){
+    const roots=G.filter(g=>g.parent==null);
+    body=roots.map(r=>goalRow(r,0,true)).join('');
+  }else{
+    const list=filtered();
+    body=list.length?list.map(g=>goalRow(g,0,true)).join(''):`<div class="empty">${T('No goals match this filter.','この絞り込みに該当する目標はありません。')}</div>`;
+  }
+  el.innerHTML=head+body;
+}
+
+/* ===== drawer / editing ===== */
+let editId=null,draft=null,isNew=false;
+function openDrawer(id){const g=byId(id);if(!g)return;editId=id;isNew=false;draft=JSON.parse(JSON.stringify(g));if(!draft.log)draft.log=[];changeNote='';fillDrawer();show();}
+function openNew(){isNew=true;editId=null;draft={id:uid('g'),parent:null,level:'individual',dept:filter.dept!=='all'?filter.dept:'ds',en:'',ja:'',owner:'Kenji Takahashi',av:'KT',status:'g',monthly:[],log:[]};changeNote='';fillDrawer();show();}
+function show(){document.getElementById('scrim').classList.add('on');document.getElementById('drawer').classList.add('on');}
+function closeDrawer(){document.getElementById('scrim').classList.remove('on');document.getElementById('drawer').classList.remove('on');editId=null;draft=null;}
+
+let newPct=null,newCmt='',changeNote='';
+function fillDrawer(){
+  const li=lvlInfo[draft.level];
+  const bd=document.getElementById('dLvlBadge'); bd.textContent=li[0]; bd.className='lvl '+li[1];
+  document.getElementById('dTitle').value=T(draft.en,draft.ja)||'';
+  document.getElementById('dDel').style.display=isNew?'none':'block';
+  // parent options: anything except itself & its descendants (and not individuals as parents-of-non-ind kept simple)
+  const parentOpts=`<option value="">${T('— None (top-level) —','— なし（最上位）—')}</option>`+
+    G.filter(g=>g.id!==draft.id).map(g=>`<option value="${g.id}" ${draft.parent===g.id?'selected':''}>${lvlInfo[g.level][0]} · ${T(g.en,g.ja)}</option>`).join('');
+  const deptOpts=DEPTS.map(d=>`<option value="${d.id}" ${draft.dept===d.id?'selected':''}>${T(d.en,d.ja)}</option>`).join('');
+  const lvlOpts=Object.keys(lvlInfo).map(k=>`<option value="${k}" ${draft.level===k?'selected':''}>${T(lvlInfo[k][2],lvlInfo[k][3])}</option>`).join('');
+
+  // monthly history (most recent first)
+  const hist=MONTHS.map(m=>{const e=monthEntry(draft,m);return {m,e};}).filter(x=>x.e).reverse();
+  const histHtml=hist.length?hist.map(({m,e})=>`
+    <div class="mo"><div class="mk">${moLabel(m)}</div><div class="mb">
+      <div class="mr"><div class="bar ${draft.status}"><i style="width:${e[1]}%"></i></div><b>${e[1]}%</b></div>
+      <div class="mc ${(T(e[2],e[3])||'').trim()?'':'none'}">${T(e[2],e[3])||T('No comment','コメントなし')}</div></div></div>`).join('')
+    :`<div class="mc none" style="padding:6px 0">${T('No monthly progress yet.','月次進捗はまだありません。')}</div>`;
+
+  const esch=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const kindLabel=k=>k==='created'?['Created','作成']:['Updated','更新'];
+  const logHtml=(draft.log&&draft.log.length)?draft.log.map(e=>`
+    <div class="logl"><div class="a">${e.who}</div><div>
+      <div class="lt"><span class="kind">${T(kindLabel(e.kind)[0],kindLabel(e.kind)[1])}</span>${e.note?' <span class="note">'+esch(e.note)+'</span>':''}</div>
+      <div class="lm">${e.who} · ${e.t}</div></div></div>`).join('')
+    :`<div class="mc none" style="padding:6px 0">${T('No changes recorded yet.','変更の記録はまだありません。')}</div>`;
+
+  const curHas=monthEntry(draft,CUR);
+  newPct=curHas?curHas[1]:progressOf(draft);
+  newCmt=curHas?T(curHas[2],curHas[3]):'';
+
+  document.getElementById('dBody').innerHTML=`
+    <div class="fld"><label data-en>Status</label><label data-ja>状態</label>
+      <div class="stseg" id="stseg">
+        <button data-st="g" class="sg ${draft.status==='g'?'on':''}">${T('On track','順調')}</button>
+        <button data-st="a" class="sa ${draft.status==='a'?'on':''}">${T('At risk','注意')}</button>
+        <button data-st="r" class="sr ${draft.status==='r'?'on':''}">${T('Off track','遅延')}</button>
+      </div></div>
+    <div class="fld"><label data-en>Level &amp; department</label><label data-ja>レベル・部門</label>
+      <div class="row2">
+        <select class="sel" id="dLevel">${lvlOpts}</select>
+        <select class="sel" id="dDept">${deptOpts}</select></div></div>
+    <div class="fld"><label data-en>Rolls up to</label><label data-ja>上位の目標</label>
+      <select class="sel" id="dParent">${parentOpts}</select>
+      <div style="font-size:11.5px;color:var(--ink-3);margin-top:7px">${T('Leave as “None” for a goal that does not ladder up to a higher one.','上位に紐づかない目標は「なし」のままにします。')}</div></div>
+
+    <div class="fld"><label data-en>Update — ${moLabel(CUR)}</label><label data-ja>${moLabel(CUR)}の進捗を更新</label>
+      <div class="addmo">
+        <div class="rr"><label>${T('Progress','進捗率')}</label><input type="range" id="npRange" min="0" max="100" value="${newPct}"><b id="npVal">${newPct}%</b></div>
+        <textarea id="ncCmt" placeholder="${T('One line on this month…','今月の状況を一言…')}">${newCmt}</textarea>
+      </div></div>
+
+    <div class="fld"><label data-en>Monthly progress</label><label data-ja>各月の進捗</label>${histHtml}</div>
+
+    <div class="fld"><label data-en>Change note (optional)</label><label data-ja>変更メモ（任意）</label>
+      <textarea class="tin" id="dNote" placeholder="${T('What changed? e.g. updated status, added KR…','何を変えた？ 例：状態を更新、KRを追加…')}" style="min-height:48px;resize:vertical"></textarea>
+      <div style="font-size:11.5px;color:var(--ink-3);margin-top:7px">${T('Kept in this goal’s history when you save.','保存すると、この目標の履歴に残ります。')}</div></div>
+
+    <div class="fld"><label data-en>History</label><label data-ja>変更履歴</label>${logHtml}</div>`;
+
+  document.getElementById('dNote').value=changeNote;
+  document.getElementById('dNote').oninput=e=>{changeNote=e.target.value;};
+  // bind
+  document.getElementById('stseg').querySelectorAll('button').forEach(b=>b.onclick=()=>{draft.status=b.dataset.st;
+    document.querySelectorAll('#stseg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    document.querySelectorAll('.mo .bar').forEach(bar=>bar.className='bar '+draft.status);});
+  document.getElementById('dLevel').onchange=e=>{draft.level=e.target.value;fillDrawer();};
+  document.getElementById('dDept').onchange=e=>{draft.dept=e.target.value;};
+  document.getElementById('dParent').onchange=e=>{draft.parent=e.target.value||null;};
+  const rng=document.getElementById('npRange');
+  rng.oninput=e=>{newPct=+e.target.value;document.getElementById('npVal').textContent=newPct+'%';};
+  document.getElementById('ncCmt').oninput=e=>{newCmt=e.target.value;};
+}
+function saveDrawer(){
+  const title=document.getElementById('dTitle').value.trim();
+  if(!title){document.getElementById('dTitle').focus();return;}
+  if(document.body.classList.contains('ja')){draft.ja=title;if(!draft.en)draft.en=title;}else{draft.en=title;if(!draft.ja)draft.ja=title;}
+  // commit current-month entry
+  const e=monthEntry(draft,CUR);
+  if(e){e[1]=newPct;if(document.body.classList.contains('ja'))e[3]=newCmt;else e[2]=newCmt;}
+  else draft.monthly.push([CUR,newPct,document.body.classList.contains('ja')?'':newCmt,document.body.classList.contains('ja')?newCmt:'']);
+  // keep a lightweight record of this change
+  const now=new Date();
+  const lang=document.body.classList.contains('ja')?'ja-JP':'en-US';
+  const stamp=now.toLocaleDateString(lang,{month:'short',day:'numeric'})+', '+now.toLocaleTimeString(lang,{hour:'2-digit',minute:'2-digit'});
+  draft.log=draft.log||[];
+  draft.log.unshift({t:stamp,who:'KT',kind:isNew?'created':'updated',note:(changeNote||'').trim()});
+  if(isNew)G.push(draft);else{const i=G.findIndex(g=>g.id===editId);G[i]=draft;}
+  closeDrawer();renderAll();toast(isNew?T('Goal added','目標を追加しました'):T('Saved','保存しました'));
+}
+function delDrawer(){
+  if(kids(editId).length){toast(T('Remove sub-goals first','先に下位の目標を削除してください'));return;}
+  const i=G.findIndex(g=>g.id===editId);if(i>-1)G.splice(i,1);closeDrawer();renderAll();toast(T('Goal deleted','目標を削除しました'));
+}
+
+/* ===== Report ===== */
+function renderReport(){
+  const list=filtered();
+  const scope=filter.dept==='all'?T('All departments','全部門'):deptName(filter.dept);
+  const lvlTxt=filter.level==='all'?'':' · '+T(lvlInfo[filter.level][2],lvlInfo[filter.level][3]);
+  const g_=list.filter(x=>x.status==='g').length,a_=list.filter(x=>x.status==='a').length,r_=list.filter(x=>x.status==='r').length;
+  const avg=list.length?Math.round(list.reduce((s,x)=>s+progressOf(x),0)/list.length):0;
+  const overall=list.length?(avg>=65?'g':avg>=45?'a':'r'):'g';
+  const date=new Date().toLocaleDateString(document.body.classList.contains('ja')?'ja-JP':'en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  const rows=list.map(g=>{
+    const cur=monthEntry(g,CUR);
+    const moCells=MONTHS.map(m=>{const e=monthEntry(g,m);return `<td class="mcol ${m===CUR?'cur':''}">${e?e[1]+'%':'·'}</td>`;}).join('');
+    return `<tr>
+      <td><span class="lvl ${lvlInfo[g.level][1]}">${lvlInfo[g.level][0]}</span></td>
+      <td class="gn">${T(g.en,g.ja)}</td>
+      <td>${g.level==='individual'?T(g.owner,g.owner):deptName(g.dept)}</td>
+      <td><span class="pill ${g.status}">${T(stInfo[g.status][0],stInfo[g.status][1])}</span></td>
+      ${moCells}
+      <td class="cm">${cur?(T(cur[2],cur[3])||'—'):'—'}</td></tr>`;
+  }).join('');
+
+  document.getElementById('repBody').innerHTML=`
+    <div class="rep-hd">
+      <div class="ti">${scope}${lvlTxt} — ${T('Goal report','目標レポート')}</div>
+      <div class="me">${T('Generated','作成')}: ${date} · ${T('FY2026','2026年度')} · ${T('current month','当月')}: ${moLabel(CUR)}</div>
+    </div>
+    <div class="rep-stats">
+      <div class="st"><div class="l">${T('Goals','目標数')}</div><div class="v">${list.length}</div></div>
+      <div class="st"><div class="l">${T('Status mix','状態内訳')}</div><div class="v"><span class="seg-mini">
+        <span class="pill g">${g_}</span><span class="pill a">${a_}</span><span class="pill r">${r_}</span></span></div></div>
+      <div class="st"><div class="l">${T('Avg achievement','平均達成率')}</div><div class="v">${avg}%</div></div>
+      <div class="st"><div class="l">${T('Overall','総合')}</div><div class="v"><span class="pill ${overall}" style="font-size:14px">${T(stInfo[overall][0],stInfo[overall][1])}</span></div></div>
+    </div>
+    <div class="rep-scroll"><table class="rep-tbl"><thead><tr>
+      <th>${T('Level','粒度')}</th><th>${T('Goal','目標')}</th><th>${T('Owner','担当')}</th><th>${T('Status','状態')}</th>
+      ${MONTHS.map(m=>`<th class="mcol">${moLabel(m)}</th>`).join('')}
+      <th>${T('This month','今月の進捗')}</th></tr></thead>
+      <tbody>${list.length?rows:`<tr><td colspan="${5+MONTHS.length}" class="empty">${T('No goals match this filter.','該当する目標はありません。')}</td></tr>`}</tbody></table></div>`;
+}
+function downloadCSV(){
+  const list=filtered();
+  const hdr=['Department','Level','Goal','Owner','Status',...MONTHS.map(m=>m),'ThisMonthComment'];
+  const esc=s=>`"${String(s==null?'':s).replace(/"/g,'""')}"`;
+  const lines=[hdr.map(esc).join(',')];
+  list.forEach(g=>{
+    const cur=monthEntry(g,CUR);
+    const row=[deptName(g.dept),lvlInfo[g.level][2],T(g.en,g.ja),(g.level==='individual'?g.owner:deptName(g.dept)),stInfo[g.status][0],
+      ...MONTHS.map(m=>{const e=monthEntry(g,m);return e?e[1]:'';}),
+      cur?T(cur[2],cur[3]):''];
+    lines.push(row.map(esc).join(','));
+  });
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`goal-report-${filter.dept}-${CUR}.csv`;a.click();URL.revokeObjectURL(a.href);
+  toast(T('CSV downloaded','CSVを出力しました'));
+}
+
+/* ===== render all ===== */
+function renderAll(){renderOverview();renderGoals();renderReport();updateCounts();}
+
+/* ===== nav / events ===== */
+document.querySelectorAll('.nav a').forEach(n=>n.onclick=()=>{
+  document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('on'));n.classList.add('on');
+  const v=n.dataset.view;document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  document.getElementById('view-'+v).classList.add('on');
+  const nm={overview:['Overview','サマリー'],goals:['Goals','目標'],report:['Report','レポート']};
+  document.getElementById('ttl').textContent=T(nm[v][0],nm[v][1]);
+});
+document.getElementById('goalList').addEventListener('click',e=>{
+  const tg=e.target.closest('[data-tog]');
+  if(tg){e.stopPropagation();const id=tg.dataset.tog;openSet.has(id)?openSet.delete(id):openSet.add(id);renderGoals();return;}
+  const row=e.target.closest('[data-row]');if(row)openDrawer(row.dataset.row);
+});
+document.getElementById('add').onclick=openNew;
+document.getElementById('dClose').onclick=closeDrawer;
+document.getElementById('dCancel').onclick=closeDrawer;
+document.getElementById('scrim').onclick=closeDrawer;
+document.getElementById('dSave').onclick=saveDrawer;
+document.getElementById('dDel').onclick=delDrawer;
+document.getElementById('csvBtn').onclick=downloadCSV;
+document.getElementById('printBtn').onclick=()=>window.print();
+
+function setLang(ja){
+  document.body.classList.toggle('ja',ja);
+  document.getElementById('en').classList.toggle('on',!ja);
+  document.getElementById('ja').classList.toggle('on',ja);
+  const on=document.querySelector('.nav a.on').dataset.view;
+  const nm={overview:['Overview','サマリー'],goals:['Goals','目標'],report:['Report','レポート']};
+  document.getElementById('ttl').textContent=T(nm[on][0],nm[on][1]);
+  syncFilters();renderAll();if(draft)fillDrawer();
+}
+document.getElementById('en').onclick=()=>setLang(false);
+document.getElementById('ja').onclick=()=>setLang(true);
+
+let tt;function toast(m){const t=document.getElementById('toast');document.getElementById('toastTx').textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2300);}
+
+syncFilters();renderAll();
+</script>
+</body>
+</html>
