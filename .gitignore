@@ -1,0 +1,5 @@
+node_modules
+dist
+.power
+*.local
+.DS_Store
