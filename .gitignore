@@ -3,3 +3,10 @@ dist
 .power
 *.local
 .DS_Store
+
+# MedDRA/J glossary data (licensed — do not commit)
+glossary/pt_j.csv
+glossary/*.md
+!glossary/README.md
+glossary/pt_j.asc
+*.asc

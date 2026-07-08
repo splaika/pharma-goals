@@ -1,16 +1,20 @@
 # 用語集（MedDRA/J PT）
 
 MedDRA/J の PT（基本語, Preferred Term）日本語ファイル `pt_j.asc` を、扱いやすい
-CSV に変換したものです。
+CSV / Markdown に変換するためのツール一式です。
+
+> **データ本体（`pt_j.csv` / `pt_j.md`）と原本 `pt_j.asc` はリポジトリに含めません。**
+> MedDRA/J はサブスクリプション・ライセンスのデータで、公開リポジトリでの配布は
+> 許可されていないためです（末尾「ライセンス」参照）。購読者が保有する原本から
+> `convert.py` でローカル生成してください。
 
 ## ファイル
 
 | ファイル | 内容 |
 | --- | --- |
-| `pt_j.csv` | PT 用語集（27,361 件, UTF-8 BOM 付き） |
-| `convert.py` | 元ファイル `pt_j.asc` から CSV/Markdown を再生成するスクリプト |
+| `convert.py` | 原本 `pt_j.asc` から CSV/Markdown を生成するスクリプト |
 
-### CSV の列
+### 生成される CSV の列
 
 | 列 | 説明 |
 | --- | --- |
@@ -19,10 +23,10 @@ CSV に変換したものです。
 | `reading_kana` | 読み（カナ, 半角→全角に正規化） |
 | `reading_alt` | 別読み（存在する場合のみ, 943 件） |
 
-## 再生成
+## 生成
 
-元の `pt_j.asc`（`$` 区切り, CP932）は**ライセンスデータのためリポジトリには含めていません**。
-購読者が保有する原本を用意して実行します。
+原本 `pt_j.asc`（`$` 区切り, CP932）を用意して実行します。生成物は公開リポジトリに
+コミットしないでください（`.gitignore` 済み）。
 
 ```bash
 python glossary/convert.py pt_j.asc glossary/pt_j.csv   # CSV
