@@ -13,6 +13,16 @@
 
 ---
 
+## 🔗 動くデモ（ブラウザで開く）
+
+ビルド不要でそのまま触れます。**ブラウザ内のダミーデータで動作し、リロードで初期状態に戻ります**。
+
+- **GitHub Pages（自動デプロイ）** — 👉 **https://splaika.github.io/pharma-goals/**
+  <br>初回のみ、リポジトリの **Settings → Pages → Source = 「GitHub Actions」** を選択してください。以降は `main` および本ブランチへの push で自動ビルド・デプロイされます（[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)）。
+- **単一HTML（サーバー不要）** — [`demo/index.html`](demo/index.html) をブラウザで開くだけ。CSS・JSをすべてインラインした自己完結ファイルです（[htmlpreview で開く](https://htmlpreview.github.io/?https://raw.githubusercontent.com/splaika/pharma-goals/main/demo/index.html)）。`npm run build:demo` で再生成できます。
+
+---
+
 ## 1. 起動（最短）
 
 ```bash
@@ -34,7 +44,8 @@ npm run dev
 | --- | --- |
 | `npm run dev` | Vite開発サーバー（モックデータ） |
 | `npm run build` | `tsc --noEmit && vite build` → `dist/` 出力 |
-| `npm test` | サーバー正本ロジックの自動テスト（Vitest・31件） |
+| `npm run build:demo` | ビルド＋インライン化 → 自己完結の `demo/index.html` を生成 |
+| `npm test` | サーバー正本ロジックの自動テスト（Vitest・34件） |
 | `npm run typecheck` | 型チェックのみ |
 
 ---

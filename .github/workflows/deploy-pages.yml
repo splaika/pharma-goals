@@ -1,0 +1,47 @@
+# Build the CTN Suite demo and publish it to GitHub Pages.
+# One-time setup: repository Settings → Pages → Source = "GitHub Actions".
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - claude/ctn-production-ui-testdata-muw0qv
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; newer pushes cancel in-progress runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      # --ignore-scripts skips the keytar native build (only needed for the
+      # unused Dataverse mode); Vite/React/TS build fine without it.
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
