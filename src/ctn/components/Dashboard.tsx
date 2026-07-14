@@ -35,13 +35,12 @@ export function Dashboard({ db, onOpen, onNavigate }: { db: CtnDb; onOpen: (id: 
         <div className="s">{t("CTN filings, alerts and reminders at a glance.", "既存の治験届・アラート・リマインダをひと目で。")}</div>
       </div>
 
-      <div className="kpis kpis-6">
-        <Kpi label={t("Total filings", "届出総数")} value={stats.total} meta={t("all series", "全シリーズ")} onClick={() => onNavigate("notifications")} />
-        <Kpi label={t("Submitted", "提出済")} value={stats.submitted} meta={t("to PMDA", "PMDA提出")} tone="green" />
-        <Kpi label={t("In progress", "進行中")} value={stats.inProgress} meta={t("draft / review / approved", "起票・レビュー・承認")} tone="blue" />
-        <Kpi label={t("Alerts", "アラート")} value={stats.alerts} meta={t("deadlines", "期限関連")} tone="red" />
-        <Kpi label={t("Reminders", "リマインダ")} value={stats.reminders} meta={t("actions pending", "対応待ち")} tone="amber" />
-        <Kpi label={t("Series", "シリーズ")} value={stats.seriesCount} meta={t("compounds", "治験成分")} onClick={() => onNavigate("series")} />
+      <div className="kpis kpis-5">
+        <Kpi label={t("Total filings", "届出総数")} value={stats.total} onClick={() => onNavigate("notifications")} />
+        <Kpi label={t("Submitted", "提出済み")} value={stats.submitted} />
+        <Kpi label={t("In progress", "進行中")} value={stats.inProgress} />
+        <Kpi label={t("Alerts", "アラート")} value={stats.alerts} />
+        <Kpi label={t("Reminders", "リマインダ")} value={stats.reminders} />
       </div>
 
       <div className="dash-grid">

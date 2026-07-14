@@ -47,7 +47,10 @@ export function CreateWizard({ db, onClose, onSubmit }: { db: CtnDb; onClose: ()
       {step > 1 && <Btn onClick={() => setStep(step - 1)}>{t("Back", "戻る")}</Btn>}
       <div style={{ flex: 1 }} />
       <Btn onClick={onClose}>{t("Cancel", "キャンセル")}</Btn>
-      {step < 2 ? (
+      {step === 1 && isNewSeries ? (
+        // 新規シリーズは計画届で確定 → 種別選択ステップは不要、直接作成
+        <Btn kind="p" disabled={!canProceedStep1} onClick={finish}>{t("Create filing", "届を作成")}</Btn>
+      ) : step === 1 ? (
         <Btn kind="p" disabled={!canProceedStep1} onClick={() => setStep(2)}>{t("Next", "次へ")} →</Btn>
       ) : (
         <Btn kind="p" onClick={finish}>{t("Create filing", "届を作成")}</Btn>
@@ -57,10 +60,10 @@ export function CreateWizard({ db, onClose, onSubmit }: { db: CtnDb; onClose: ()
 
   return (
     <Modal title={t("New CTN filing", "新規届作成")} sub={t("Wizard: choose a series and the notification type.", "ウィザード：シリーズと届出種別を選択します。")} onClose={onClose} footer={footer} size="lg">
-      {/* ステップ表示 */}
+      {/* ステップ表示（新規シリーズは計画届固定のため種別ステップなし） */}
       <div className="wiz-steps">
         <span className={step === 1 ? "on" : "done"}>1. {t("Series", "シリーズ")}</span>
-        <span className={step === 2 ? "on" : ""}>2. {t("Notification type", "届出種別")}</span>
+        {!isNewSeries && <span className={step === 2 ? "on" : ""}>2. {t("Notification type", "届出種別")}</span>}
       </div>
 
       {step === 1 && (

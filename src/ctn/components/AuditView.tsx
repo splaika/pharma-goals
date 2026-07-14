@@ -18,14 +18,19 @@ export function AuditView({ db }: { db: CtnDb }) {
   const { t, lang } = useLang();
   const [q, setQ] = useState("");
   const [action, setAction] = useState<"all" | AuditEntry["action"]>("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   const rows = useMemo(
     () =>
       db.audit
         .filter((a) => action === "all" || a.action === action)
+        .filter((a) => !from || a.at.slice(0, 10) >= from)
+        .filter((a) => !to || a.at.slice(0, 10) <= to)
         .filter((a) => !q || a.who.includes(q) || a.entity.includes(q) || a.entityRef.toLowerCase().includes(q.toLowerCase()) || a.summary.includes(q)),
-    [db.audit, q, action]
+    [db.audit, q, action, from, to]
   );
+  const anyFilter = action !== "all" || from || to || q;
 
   return (
     <>
@@ -36,13 +41,22 @@ export function AuditView({ db }: { db: CtnDb }) {
 
       <div className="filters">
         <div className="fg">
-          <label>{t("Action", "操作")}</label>
+          <label>{t("Filter", "フィルタ")}</label>
           <select className="sel" value={action} onChange={(e) => setAction(e.target.value as typeof action)}>
-            <option value="all">{t("All", "すべて")}</option>
+            <option value="all">{t("All actions", "すべての操作")}</option>
             {Object.entries(ACTION_LABEL).map(([k, v]) => <option key={k} value={k}>{lang === "ja" ? v[1] : v[0]}</option>)}
           </select>
         </div>
+        <div className="fg">
+          <label>{t("From", "期間 From")}</label>
+          <input type="date" className="tin" style={{ width: 150 }} value={from} onChange={(e) => setFrom(e.target.value)} />
+        </div>
+        <div className="fg">
+          <label>{t("To", "To")}</label>
+          <input type="date" className="tin" style={{ width: 150 }} value={to} onChange={(e) => setTo(e.target.value)} />
+        </div>
         <input className="search" placeholder={t("Search…", "検索…")} value={q} onChange={(e) => setQ(e.target.value)} />
+        {anyFilter && <button className="linkbtn" onClick={() => { setAction("all"); setFrom(""); setTo(""); setQ(""); }}>{t("Clear", "クリア")}</button>}
         <div className="fsp" />
         <span className="fcount">{rows.length} {t("entries", "件")}</span>
       </div>

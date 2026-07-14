@@ -27,7 +27,7 @@ import {
 } from "../refData";
 import { Section, Field, StatusPill, TypeBadge, Btn, Icon, UnconfirmedBadge } from "./common";
 import type { CtnDb } from "../data/repository";
-import type { Investigator, Notification, Site, SiteDrugQty, StudyDrug } from "../types";
+import type { Investigator, Notification, ReferenceNote, Site, SiteDrugQty, StudyDrug } from "../types";
 
 type Cb = (n: Notification) => Promise<Notification | void> | Notification | void;
 
@@ -207,7 +207,28 @@ export function NotificationDetail({
       (q[field] as number) = value;
     });
 
+  // 治験使用薬の任意フィールド更新
+  const setDrug = (id: string, fn: (d: StudyDrug) => void) =>
+    set((n) => {
+      const d = n.studyDrugs.find((x) => x.id === id);
+      if (d) fn(d);
+    });
+
+  // 参照治験届出
+  const addReference = () =>
+    set((n) =>
+      n.references.push({ id: `ref-${Math.random().toString(36).slice(2, 8)}`, serialNo: n.references.length + 1, refCategory: "医薬品", refCode: "", refCount: "", refType: "", refContents: "" })
+    );
+  const setRef = (id: string, fn: (r: ReferenceNote) => void) =>
+    set((n) => {
+      const r = n.references.find((x) => x.id === id);
+      if (r) fn(r);
+    });
+  const rmReference = (id: string) => set((n) => (n.references = n.references.filter((r) => r.id !== id)));
+
   const terminal = draft.notifType === "termination" || draft.notifType === "completion";
+  const activeSponsors = db.sponsors.filter((s) => s.active);
+  const sponsor = db.sponsors.find((s) => s.id === draft.sponsorId);
 
   return (
     <div className="detail">
@@ -238,7 +259,7 @@ export function NotificationDetail({
           const order = ["draft", "review", "approved", "submitted"];
           const cur = order.indexOf(draft.status);
           const state = i < cur ? "done" : i === cur ? "cur" : "todo";
-          const names = { draft: ["Draft", "起票"], review: ["Review", "社内レビュー"], approved: ["Approved", "承認"], submitted: ["Submitted", "提出"] } as const;
+          const names = { draft: ["Draft", "作成中"], review: ["In Review", "レビュー中"], approved: ["Approved", "承認済み"], submitted: ["Submitted", "提出済み"] } as const;
           return (
             <div key={s} className={`wf-step ${state}`}>
               <span className="wf-dot">{i < cur ? "✓" : i + 1}</span>
@@ -282,6 +303,14 @@ export function NotificationDetail({
               <input type="date" className="tin" value={draft.plannedStartDate ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.plannedStartDate = e.target.value))} />
             </Field>
           )}
+          {show("cr_subj30dayreview") && (
+            <Field label={t("30-day review drug category", "30日調査対応被験薬区分")} mark={mk("cr_subj30dayreview")} unconfirmed>
+              <select className="sel" value={draft.subj30dayReview ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.subj30dayReview = e.target.value ? Number(e.target.value) : undefined))}>
+                <option value="">—</option>
+                {options(SET.kubun).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </Field>
+          )}
           <Field label={t("Kubun (submission category)", "届出区分")} mark="always" hint={kubunSug ? `${t("Recommended", "推奨")}: ${label(SET.kubun, kubunSug.value)} — ${lang === "ja" ? kubunSug.reasonJa : kubunSug.reasonEn}` : ""}>
             <div className="inline">
               <select className="sel" value={draft.kubun ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.kubun = Number(e.target.value)))}>
@@ -317,6 +346,16 @@ export function NotificationDetail({
         )}
       </Section>
 
+      {/* ===== 治験届出者 ===== */}
+      <Section title={t("Sponsor / notifier", "治験届出者")} sub={t("Selected from the master; contact details shown for reference.", "マスタから選択。連絡先等は参照表示。")}>
+        <div className="form-grid">
+          <Field label={t("Sponsor", "治験届出者")} mark="always"><select className="sel" value={draft.sponsorId} disabled={!editable} onChange={(e) => set((n) => (n.sponsorId = e.target.value))}>{activeSponsors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
+          {sponsor && <Field label={t("Contact", "届出担当者")}><input className="tin" value={`${sponsor.contactName}（${sponsor.contactTitle}）`} disabled /></Field>}
+          {sponsor && <Field label={t("Manufacturer code", "業者コード")}><input className="tin" value={sponsor.manufacturerCode} disabled /></Field>}
+          {sponsor && <Field label={t("Tel / contact", "電話・連絡先")}><input className="tin" value={`${sponsor.telNo} / ${sponsor.faxOrMail}`} disabled /></Field>}
+        </div>
+      </Section>
+
       {/* ===== 治験計画概要 ===== */}
       {draft.notifType !== "devDiscontinuation" && (
         <Section title={t("Trial plan summary", "治験計画概要")}>
@@ -332,6 +371,11 @@ export function NotificationDetail({
           </div>
           {show("cr_objectives") && <Field label={t("Objectives", "目的")} mark={mk("cr_objectives")} wide><textarea className="ta" value={draft.objectives} disabled={!editable} onChange={(e) => set((n) => (n.objectives = e.target.value))} /></Field>}
           {show("cr_targetdisease") && <Field label={t("Target disease (main drug)", "主たる被験薬の対象疾患")} mark={mk("cr_targetdisease")} wide><input className="tin" value={draft.targetDisease} disabled={!editable} onChange={(e) => set((n) => (n.targetDisease = e.target.value))} /></Field>}
+          {show("cr_reasononerous") && <Field label={t("Reason for onerous trial", "有償の理由等")} mark={mk("cr_reasononerous")} unconfirmed wide><textarea className="ta" value={draft.reasonOnerous ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.reasonOnerous = e.target.value))} placeholder={t("Only for onerous (paid) trials", "有償治験の場合のみ")} /></Field>}
+          <div className="form-grid">
+            <Field label={t("GW receipt no.", "GW受付番号")} mark={mk("cr_gwreceptno")} hint={t("Entered after PMDA gateway acceptance", "提出後にPMDA受付完了メールから入力")}><input className="tin" value={draft.gwReceptNo ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.gwReceptNo = e.target.value))} /></Field>
+          </div>
+          {show("cr_footnote") && <Field label={t("Footnote", "脚注")} mark={mk("cr_footnote")} unconfirmed wide><textarea className="ta" value={draft.footnote ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.footnote = e.target.value))} /></Field>}
         </Section>
       )}
 
@@ -344,25 +388,11 @@ export function NotificationDetail({
 
       {/* ===== 治験使用薬 ===== */}
       {draft.notifType !== "devDiscontinuation" && (
-        <Section title={t("Study drugs", "治験使用薬")} sub={t("Serial no. = matching-key type: constant across the series (plan → completion)", "順序番号＝突合キー型：シリーズ内で不変（計画→終了で一致）")} right={editable ? <Btn kind="p" small onClick={addStudyDrug}>{Icon.plus} {t("Add drug", "薬を追加")}</Btn> : undefined}>
-          <div className="row-table">
-            <div className="rt-head rt-drug"><span>{t("Role", "主従")}</span><span>{t("Serial", "順序番号")}</span><span>{t("Drug name", "治験薬名称")}</span><span>{t("Manufacturer / code", "製造所・業者コード")}</span><span>{t("Efficacy class", "薬効分類")}</span><span /></div>
-            {draft.studyDrugs.length === 0 && <div className="rt-empty">{t("No study drugs. Add the main investigational drug first.", "治験使用薬がありません。まず主たる被験薬を追加してください。")}</div>}
-            {draft.studyDrugs.map((d) => (
-              <div key={d.id} className="rt-row rt-drug">
-                <span>
-                  <select className="sel sel-sm" value={d.drugRole} disabled={!editable} onChange={(e) => set((n) => { const x = n.studyDrugs.find((y) => y.id === d.id)!; x.drugRole = Number(e.target.value); })}>
-                    {options(SET.drugRole).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </span>
-                <span className="serial">{d.serialNo > 0 ? `#${d.serialNo}` : <em className="muted">{t("auto", "採番前")}</em>}</span>
-                <span><input className="tin tin-sm" value={d.drugName} disabled={!editable} onChange={(e) => set((n) => { const x = n.studyDrugs.find((y) => y.id === d.id)!; x.drugName = e.target.value; })} placeholder="治験薬名称" /></span>
-                <span><input className="tin tin-sm" value={d.plantName} disabled={!editable} onChange={(e) => set((n) => { const x = n.studyDrugs.find((y) => y.id === d.id)!; x.plantName = e.target.value; })} placeholder="製造所名称" /><input className="tin tin-sm mt4" value={d.plantCode} disabled={!editable} onChange={(e) => set((n) => { const x = n.studyDrugs.find((y) => y.id === d.id)!; x.plantCode = e.target.value; })} placeholder="業者コード" /></span>
-                <span><input className="tin tin-sm" value={d.efficacyClassCode} disabled={!editable} onChange={(e) => set((n) => { const x = n.studyDrugs.find((y) => y.id === d.id)!; x.efficacyClassCode = e.target.value; })} placeholder="薬効分類番号" /></span>
-                <span>{editable && <button className="icon-btn danger" onClick={() => rmStudyDrug(d.id)}>{Icon.trash}</button>}</span>
-              </div>
-            ))}
-          </div>
+        <Section title={t("Study drugs", "治験使用薬")} sub={t("Serial no. = matching-key type: constant across the series (plan → completion). Expand a row for all fields.", "順序番号＝突合キー型：シリーズ内で不変。行を展開すると全項目を入力できます。")} right={editable ? <Btn kind="p" small onClick={addStudyDrug}>{Icon.plus} {t("Add drug", "薬を追加")}</Btn> : undefined}>
+          {draft.studyDrugs.length === 0 && <div className="rt-empty">{t("No study drugs. Add the main investigational drug first.", "治験使用薬がありません。まず主たる被験薬を追加してください。")}</div>}
+          {draft.studyDrugs.map((d) => (
+            <StudyDrugCard key={d.id} drug={d} editable={editable} onField={(fn) => setDrug(d.id, fn)} onRemove={() => rmStudyDrug(d.id)} />
+          ))}
         </Section>
       )}
 
@@ -380,6 +410,27 @@ export function NotificationDetail({
               activeDoctors={activeDoctors} activeInstitutions={activeInstitutions} activeIrbs={activeIrbs} activeStaff={activeStaff}
             />
           ))}
+        </Section>
+      )}
+
+      {/* ===== 参照治験届出 ===== */}
+      {draft.notifType !== "devDiscontinuation" && (
+        <Section title={t("Referenced notifications", "参照治験届出")} sub={t("Other CTN filings referenced by this one.", "この届が参照する治験届出情報。")} right={editable ? <Btn small onClick={addReference}>{Icon.plus} {t("Add", "追加")}</Btn> : undefined}>
+          {draft.references.length === 0 ? <div className="rt-empty">{t("No references.", "参照はありません。")}</div> : (
+            <div className="row-table">
+              <div className="rt-head rt-ref"><span>{t("Category", "医薬品等の別")}</span><span>{t("Code", "成分記号/識別記号")}</span><span>{t("Count", "届出回数")}</span><span>{t("Type", "参照の区分")}</span><span>{t("Detail", "参照の詳細")}</span><span /></div>
+              {draft.references.map((r) => (
+                <div key={r.id} className="rt-row rt-ref">
+                  <span><select className="sel sel-sm" value={r.refCategory} disabled={!editable} onChange={(e) => setRef(r.id, (x) => (x.refCategory = e.target.value))}>{options(SET.targetCategory).map((o) => <option key={o.value} value={o.label}>{o.label}</option>)}</select></span>
+                  <span><input className="tin tin-sm" value={r.refCode} disabled={!editable} onChange={(e) => setRef(r.id, (x) => (x.refCode = e.target.value))} /></span>
+                  <span><input className="tin tin-sm" value={r.refCount} disabled={!editable} onChange={(e) => setRef(r.id, (x) => (x.refCount = e.target.value))} /></span>
+                  <span><input className="tin tin-sm" value={r.refType} disabled={!editable} onChange={(e) => setRef(r.id, (x) => (x.refType = e.target.value))} /></span>
+                  <span><input className="tin tin-sm" value={r.refContents} disabled={!editable} onChange={(e) => setRef(r.id, (x) => (x.refContents = e.target.value))} /></span>
+                  <span>{editable && <button className="icon-btn danger" onClick={() => rmReference(r.id)}>{Icon.trash}</button>}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
       )}
 
@@ -431,6 +482,51 @@ export function NotificationDetail({
 }
 
 // ---------------------------------------------------------------------------
+// 治験使用薬カード（展開すると全項目）
+// ---------------------------------------------------------------------------
+function StudyDrugCard({ drug, editable, onField, onRemove }: { drug: StudyDrug; editable: boolean; onField: (fn: (d: StudyDrug) => void) => void; onRemove: () => void }) {
+  const { t } = useLang();
+  const [open, setOpen] = useState(false);
+  const isMain = drug.drugRole === DRUG_ROLE.main;
+  return (
+    <div className="drugcard">
+      <div className="drugcard-h" onClick={() => setOpen((o) => !o)}>
+        <button className={`tog2${open ? " open" : ""}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="m9 18 6-6-6-6" /></svg></button>
+        <span className={`role-chip ${isMain ? "resp" : "sub"}`}>{label(SET.drugRole, drug.drugRole)}</span>
+        <span className="drug-serial">{drug.serialNo > 0 ? `#${drug.serialNo}` : <em className="muted">{t("auto", "採番前")}</em>}</span>
+        <b className="drug-name">{drug.drugName || <em className="muted">{t("(unnamed drug)", "（未入力）")}</em>}</b>
+        <div style={{ flex: 1 }} />
+        {editable && <button className="icon-btn danger" onClick={(e) => { e.stopPropagation(); onRemove(); }}>{Icon.trash}</button>}
+      </div>
+      {open && (
+        <div className="drugcard-b">
+          <div className="form-grid">
+            <Field label={t("Role", "主従区分")} mark="always"><select className="sel" value={drug.drugRole} disabled={!editable} onChange={(e) => onField((d) => (d.drugRole = Number(e.target.value)))}>{options(SET.drugRole).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+            <Field label={t("Drug name", "治験薬名称")} mark="always"><input className="tin" value={drug.drugName} disabled={!editable} onChange={(e) => onField((d) => (d.drugName = e.target.value))} /></Field>
+            {!isMain && <Field label={t("ID type", "記号・名称等の種類")} mark="conditional" unconfirmed><input className="tin" value={drug.idType ?? ""} disabled={!editable} onChange={(e) => onField((d) => (d.idType = e.target.value))} /></Field>}
+            {!isMain && <Field label={t("Category", "区別（被験薬/対照薬等）")} mark="conditional" unconfirmed><select className="sel" value={drug.combCategory ?? ""} disabled={!editable} onChange={(e) => onField((d) => (d.combCategory = e.target.value ? Number(e.target.value) : undefined))}><option value="">—</option>{options(SET.combCategory).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>}
+            {!isMain && <Field label={t("Approval status (domestic)", "国内における承認状況")} mark="conditional" unconfirmed><input className="tin" value={drug.applicationStatus ?? ""} disabled={!editable} onChange={(e) => onField((d) => (d.applicationStatus = e.target.value))} /></Field>}
+            {!isMain && <Field label={t("ADR report", "副作用報告の有無")} mark="conditional" unconfirmed><select className="sel" value={drug.adrReport ?? ""} disabled={!editable} onChange={(e) => onField((d) => (d.adrReport = e.target.value))}><option value="">—</option><option value="有">{t("Yes", "有")}</option><option value="無">{t("No", "無")}</option></select></Field>}
+            <Field label={t("Manufacturer name", "製造所名称")} mark="always" unconfirmed><input className="tin" value={drug.plantName} disabled={!editable} onChange={(e) => onField((d) => (d.plantName = e.target.value))} /></Field>
+            <Field label={t("Manufacturer code", "製造所業者コード")} mark="always"><input className="tin" value={drug.plantCode} disabled={!editable} onChange={(e) => onField((d) => (d.plantCode = e.target.value))} /></Field>
+            <Field label={t("Manufacturer address 1", "製造所所在地1")} mark="always"><input className="tin" value={drug.plantAddress1} disabled={!editable} onChange={(e) => onField((d) => (d.plantAddress1 = e.target.value))} /></Field>
+            <Field label={t("Manufacturer address 2", "製造所所在地2")} mark="always"><input className="tin" value={drug.plantAddress2} disabled={!editable} onChange={(e) => onField((d) => (d.plantAddress2 = e.target.value))} /></Field>
+            <Field label={t("Efficacy class code", "薬効分類番号")} mark="always" unconfirmed><input className="tin" value={drug.efficacyClassCode} disabled={!editable} onChange={(e) => onField((d) => (d.efficacyClassCode = e.target.value))} /></Field>
+            <Field label={t("Dosage form code", "剤形コード")} unconfirmed><input className="tin" value={drug.dosageFormCode ?? ""} disabled={!editable} onChange={(e) => onField((d) => (d.dosageFormCode = e.target.value))} /></Field>
+            <Field label={t("Admin route code", "投与経路コード")}><input className="tin" value={drug.adminRouteCode ?? ""} disabled={!editable} onChange={(e) => onField((d) => (d.adminRouteCode = e.target.value))} /></Field>
+          </div>
+          <Field label={t("Ingredients & quantity", "成分及び分量")} mark="always" wide><textarea className="ta" value={drug.ingredients} disabled={!editable} onChange={(e) => onField((d) => (d.ingredients = e.target.value))} /></Field>
+          <Field label={t("Manufacturing method", "製造方法")} wide><textarea className="ta" value={drug.manufactMethod ?? ""} disabled={!editable} onChange={(e) => onField((d) => (d.manufactMethod = e.target.value))} /></Field>
+          <Field label={t("Intended effects", "予定される効能効果")} mark="always" wide><textarea className="ta" value={drug.intendEffects} disabled={!editable} onChange={(e) => onField((d) => (d.intendEffects = e.target.value))} /></Field>
+          <Field label={t("Intended dosage", "予定される用法用量")} mark="always" wide><textarea className="ta" value={drug.intendDosage} disabled={!editable} onChange={(e) => onField((d) => (d.intendDosage = e.target.value))} /></Field>
+          <Field label={t("Dosage & administration", "用法及び用量")} mark="always" unconfirmed wide><textarea className="ta" value={drug.dosageAdmin ?? ""} disabled={!editable} onChange={(e) => onField((d) => (d.dosageAdmin = e.target.value))} /></Field>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // 施設カード（医師ロスター＋数量マトリクス）
 // ---------------------------------------------------------------------------
 function SiteCard({
@@ -468,8 +564,13 @@ function SiteCard({
         <Field label={t("Department", "実施診療科")} mark="always"><input className="tin tin-sm" value={site.department} disabled={!editable} onChange={(e) => onField((s) => (s.department = e.target.value))} /></Field>
         <Field label={t("Planned subjects", "予定被験者数")} mark="always"><input type="number" className="tin tin-sm" value={site.plannedSubjects} disabled={!editable} onChange={(e) => onField((s) => (s.plannedSubjects = Number(e.target.value)))} /></Field>
         <Field label={t("IRB", "IRB")} mark="always"><select className="sel sel-sm" value={site.irbId} disabled={!editable} onChange={(e) => onField((s) => (s.irbId = e.target.value))}>{activeIrbs.map((i) => <option key={i.id} value={i.id}>{i.ownerName}</option>)}</select></Field>
-        <Field label={t("CRC / coordinator", "現場担当（CRC）")}><select className="sel sel-sm" value={site.crcStaffId ?? ""} disabled={!editable} onChange={(e) => onField((s) => (s.crcStaffId = e.target.value || undefined))}><option value="">—</option>{activeStaff.filter((st) => st.institutionId === site.institutionId).map((st) => <option key={st.id} value={st.id}>{st.name}（{st.role}）</option>)}</select></Field>
+        <Field label={t("CRC", "CRC")}><select className="sel sel-sm" value={site.crcStaffId ?? ""} disabled={!editable} onChange={(e) => onField((s) => (s.crcStaffId = e.target.value || undefined))}><option value="">—</option>{activeStaff.filter((st) => st.institutionId === site.institutionId).map((st) => <option key={st.id} value={st.id}>{st.name}（{st.role}）</option>)}</select></Field>
         {terminal && <Field label={t("Enrolled subjects", "実施医療機関被験者数")} mark="always"><input type="number" className="tin tin-sm" value={site.enrolledSubjects ?? ""} disabled={!editable} onChange={(e) => onField((s) => (s.enrolledSubjects = Number(e.target.value)))} /></Field>}
+        <Field label={t("SMO name", "SMO名称")}><input className="tin tin-sm" value={site.smoName ?? ""} disabled={!editable} onChange={(e) => onField((s) => (s.smoName = e.target.value))} placeholder={t("If SMO is used", "SMOありの場合")} /></Field>
+        <Field label={t("SMO address 1", "SMO住所1")}><input className="tin tin-sm" value={site.smoAddress1 ?? ""} disabled={!editable} onChange={(e) => onField((s) => (s.smoAddress1 = e.target.value))} /></Field>
+        <Field label={t("SMO address 2", "SMO住所2")}><input className="tin tin-sm" value={site.smoAddress2 ?? ""} disabled={!editable} onChange={(e) => onField((s) => (s.smoAddress2 = e.target.value))} /></Field>
+        <Field label={t("SMO service scope", "SMO委託業務範囲")}><input className="tin tin-sm" value={site.smoService ?? ""} disabled={!editable} onChange={(e) => onField((s) => (s.smoService = e.target.value))} /></Field>
+        <Field label={t("Others", "その他")} unconfirmed><input className="tin tin-sm" value={site.others ?? ""} disabled={!editable} onChange={(e) => onField((s) => (s.others = e.target.value))} /></Field>
       </div>
 
       {/* 医師ロスター */}

@@ -14,6 +14,7 @@ import {
   gaijiFor,
   GAIJI_MAP,
 } from "./refData";
+import { getRules } from "./rules";
 import type { Investigator, Notification, StudyDrug } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -36,7 +37,8 @@ export function computeDeadline(
 ): string | undefined {
   if (n.notifType !== "plan" && n.notifType !== "change") return undefined;
   if (!n.plannedStartDate) return undefined;
-  return addDays(n.plannedStartDate, is30DayReview(n) ? -30 : -14);
+  const r = getRules(); // 設定画面のオフセット（既定 30 / 14）
+  return addDays(n.plannedStartDate, is30DayReview(n) ? -r.offset30 : -r.offset14);
 }
 
 // ---------------------------------------------------------------------------

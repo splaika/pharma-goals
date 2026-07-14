@@ -66,10 +66,10 @@ export const STATUS_VALUE: Record<StatusKey, number> = {
 };
 export const STATUS_ORDER: StatusKey[] = ["draft", "review", "approved", "submitted"];
 export const STATUS_LABEL: Record<StatusKey, [string, string]> = {
-  draft: ["Draft", "起票"],
-  review: ["In Review", "社内レビュー"],
-  approved: ["Approved", "承認済"],
-  submitted: ["Submitted", "提出済"],
+  draft: ["Draft", "作成中"],
+  review: ["In Review", "レビュー中"],
+  approved: ["Approved", "承認済み"],
+  submitted: ["Submitted", "提出済み"],
 };
 // UIステータス色クラス（index.css の g/a/r と別に専用）
 export const STATUS_CLASS: Record<StatusKey, string> = {

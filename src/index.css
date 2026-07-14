@@ -362,12 +362,12 @@
 .dt-count{font-size:13px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .detail-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-/* workflow bar */
-.wf{display:flex;align-items:center;gap:6px;margin-bottom:16px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px 16px;box-shadow:var(--sh)}
-.wf-step{display:flex;align-items:center;gap:8px;flex:1;position:relative}
-.wf-step:not(:last-child)::after{content:"";position:absolute;right:-3px;top:13px;width:calc(100% - 40px);height:2px;background:var(--line);left:34px}
-.wf-dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--line);color:var(--ink-3);flex:none;z-index:1}
-.wf-name{font-size:12.5px;font-weight:600;color:var(--ink-3)}
+/* workflow bar — dot stacked above label so the connector never crosses text */
+.wf{display:flex;align-items:flex-start;gap:6px;margin-bottom:16px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px 12px;box-shadow:var(--sh)}
+.wf-step{display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;position:relative}
+.wf-step:not(:last-child)::after{content:"";position:absolute;top:13px;left:calc(50% + 18px);width:calc(100% - 36px);height:2px;background:var(--line);z-index:0}
+.wf-dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--line);color:var(--ink-3);flex:none;position:relative;z-index:1}
+.wf-name{font-size:12px;font-weight:600;color:var(--ink-3);text-align:center;white-space:nowrap}
 .wf-step.done .wf-dot{background:var(--green);color:#fff} .wf-step.done .wf-name{color:var(--ink-2)}
 .wf-step.done:not(:last-child)::after{background:var(--green)}
 .wf-step.cur .wf-dot{background:var(--blue);color:#fff;box-shadow:0 0 0 4px var(--blue-soft)} .wf-step.cur .wf-name{color:var(--navy)}
@@ -548,3 +548,59 @@
 /* toast error variant */
 .toast-err{background:var(--red)}
 .toast-err svg{color:#fff}
+
+/* ============================================================
+   CTN — revision 2 (dashboard/list/import/settings/drug cards)
+   ============================================================ */
+.kpis-5{grid-template-columns:repeat(5,1fr)}
+@media(max-width:1100px){.kpis-5{grid-template-columns:repeat(3,1fr)}}
+
+/* notification list: draggable columns */
+.ntbl-hint{font-size:11px;color:var(--ink-3);padding:8px 16px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:10px}
+.linkbtn{background:none;border:none;color:var(--blue);font-size:11.5px;font-weight:600;cursor:pointer;padding:0}
+.linkbtn:hover{text-decoration:underline}
+.col-drag{cursor:grab;user-select:none}
+.col-drag:active{cursor:grabbing}
+.col-grip{color:var(--ink-4);margin-right:6px;letter-spacing:-2px;font-size:10px}
+
+/* import (dropzone + list) */
+.dropzone{border:2px dashed var(--line);border-radius:14px;padding:34px 20px;text-align:center;cursor:pointer;transition:.15s;background:#fff;margin-bottom:18px}
+.dropzone:hover,.dropzone.over{border-color:var(--blue);background:var(--blue-soft)}
+.dz-ico{width:40px;height:40px;margin:0 auto 10px;color:var(--blue)}.dz-ico svg{width:40px;height:40px}
+.dz-t{font-size:14px;font-weight:600}
+.dz-s{font-size:12px;color:var(--ink-3);margin-top:5px}
+.imp-list{display:flex;flex-direction:column}
+.imp-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line-2)}
+.imp-row:last-child{border-bottom:none}
+.imp-kind{font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;color:#fff;flex:none}
+.imp-kind.k-xml{background:var(--blue)} .imp-kind.k-pdf{background:var(--red)} .imp-kind.k-other{background:var(--ink-3)}
+.imp-body{flex:1;min-width:0}
+.imp-name{font-size:13px;font-weight:600}
+.imp-msg{font-size:11.5px;color:var(--ink-2);margin-top:2px}
+.imp-row.st-error .imp-msg{color:var(--red)}
+.imp-parsed{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;font-size:11.5px;align-items:center}
+.imp-chip{background:var(--blue-soft);color:var(--navy);font-weight:700;font-size:10.5px;padding:2px 8px;border-radius:6px}
+
+/* settings (rule toggles) */
+.rule-toggles{display:flex;flex-direction:column;gap:2px}
+.rule-toggle{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:10px;cursor:pointer;transition:.1s}
+.rule-toggle:hover{background:var(--line-2)}
+.rule-toggle input{margin-top:3px;width:16px;height:16px;accent-color:var(--blue)}
+.rule-toggle b{font-size:13px;display:block}
+.rule-toggle span{font-size:11.5px;color:var(--ink-3);display:block;margin-top:2px}
+.settings-actions{display:flex;align-items:center;gap:10px;margin-top:6px}
+
+/* references row grid */
+.rt-ref{grid-template-columns:130px 1.2fr 90px 1fr 1.4fr 34px}
+
+/* study drug card (expandable) */
+.drugcard{border:1px solid var(--line);border-radius:11px;margin-bottom:12px;overflow:hidden}
+.drugcard:last-child{margin-bottom:0}
+.drugcard-h{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--line-2);cursor:pointer}
+.drugcard-h:hover{background:#eef2f7}
+.tog2{width:20px;height:20px;display:grid;place-items:center;color:var(--ink-3);flex:none;background:none;border:none}
+.tog2 svg{width:14px;height:14px;transition:.18s}
+.tog2.open svg{transform:rotate(90deg)}
+.drug-serial{font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;font-size:12.5px;min-width:32px}
+.drug-name{font-size:13.5px;font-weight:600}
+.drugcard-b{padding:16px 14px;display:flex;flex-direction:column;gap:14px}

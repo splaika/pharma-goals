@@ -4,6 +4,7 @@
 // ============================================================================
 import { computeDeadline } from "./logic";
 import { CHANGE_TYPE, DOCTOR_ROLE, daysUntil, TODAY } from "./refData";
+import { getRules } from "./rules";
 import type { AlertItem, Compound, Notification, StatusKey } from "./types";
 import type { CtnDb } from "./data/repository";
 
@@ -29,6 +30,7 @@ function seriesClosedAfter(db: CtnDb, n: Notification): boolean {
 }
 
 export function deriveAlerts(db: CtnDb, today = TODAY): AlertItem[] {
+  const r = getRules(); // 「ロジカルチェック設定」で編集される閾値・有効/無効
   const items: AlertItem[] = [];
   for (const n of db.notifications) {
     const compound = db.compounds.find((c) => c.id === n.compoundId);
@@ -39,27 +41,28 @@ export function deriveAlerts(db: CtnDb, today = TODAY): AlertItem[] {
     // 提出期限（起票・レビュー・承認済で未提出）
     if (dl && n.status !== "submitted" && du != null) {
       if (du < 0) {
-        items.push({ id: `al-ovd-${n.id}`, kind: "alert", severity: "high", notificationId: n.id, dueDate: dl, titleJa: `提出期限超過：${tag}`, titleEn: `Deadline passed: ${tag}`, detailJa: `提出期限を ${-du} 日超過しています（${dl}）。`, detailEn: `${-du} days past the submission deadline (${dl}).` });
-      } else if (du <= 14) {
-        items.push({ id: `al-due-${n.id}`, kind: "alert", severity: du <= 7 ? "high" : "med", notificationId: n.id, dueDate: dl, titleJa: `提出期限接近：${tag}`, titleEn: `Deadline soon: ${tag}`, detailJa: `提出期限まで残り ${du} 日（${dl}）。`, detailEn: `${du} days until the submission deadline (${dl}).` });
+        if (r.overdue)
+          items.push({ id: `al-ovd-${n.id}`, kind: "alert", severity: "high", notificationId: n.id, dueDate: dl, titleJa: `提出期限超過：${tag}`, titleEn: `Deadline passed: ${tag}`, detailJa: `提出期限を ${-du} 日超過しています（${dl}）。`, detailEn: `${-du} days past the submission deadline (${dl}).` });
+      } else if (du <= r.warnDays) {
+        items.push({ id: `al-due-${n.id}`, kind: "alert", severity: du <= r.hotDays ? "high" : "med", notificationId: n.id, dueDate: dl, titleJa: `提出期限接近：${tag}`, titleEn: `Deadline soon: ${tag}`, detailJa: `提出期限まで残り ${du} 日（${dl}）。`, detailEn: `${du} days until the submission deadline (${dl}).` });
       }
     }
 
     // 承認済・提出待ち → リマインダ
-    if (n.status === "approved") {
+    if (r.submitReminder && n.status === "approved") {
       items.push({ id: `rm-sub-${n.id}`, kind: "reminder", severity: "med", notificationId: n.id, titleJa: `提出待ち：${tag}`, titleEn: `Awaiting submission: ${tag}`, detailJa: "承認済です。提出（XML生成・GW送信）を実施してください。", detailEn: "Approved. Generate XML and submit." });
     }
 
     // PMDA照会 回答期限
     for (const q of n.inquiries) {
-      if (q.responseDate) continue;
+      if (!r.inquiryReminder || q.responseDate) continue;
       const qd = daysUntil(q.responseDeadline, today);
-      if (qd != null && qd <= 21) {
+      if (qd != null && qd <= r.inquiryDays) {
         const overdue = qd < 0;
         items.push({
           id: `rm-inq-${q.id}`,
           kind: "reminder",
-          severity: overdue || qd <= 7 ? "high" : "med",
+          severity: overdue || qd <= r.hotDays ? "high" : "med",
           notificationId: n.id,
           dueDate: q.responseDeadline,
           titleJa: `PMDA照会 回答期限${overdue ? "超過" : ""}：${tag}`,
@@ -70,9 +73,9 @@ export function deriveAlerts(db: CtnDb, today = TODAY): AlertItem[] {
       }
     }
 
-    // 12か月バッチ（分担医師の異動を含む変更届の定期報告 保留）
-    if (n.notifType === "change" && n.status === "submitted" && hasSubInvestigatorMovement(n) && !seriesClosedAfter(db, n)) {
-      items.push({ id: `rm-batch-${n.id}`, kind: "reminder", severity: "low", notificationId: n.id, titleJa: `定期報告 保留：${tag}`, titleEn: `Periodic report pending: ${tag}`, detailJa: "分担医師の異動を含む変更届が12か月バッチの保留対象です（終了・中止届の提出でクリア）。", detailEn: "Change filing with investigator movement is pending the 12-month batch." });
+    // 定期報告バッチ（分担医師の異動を含む変更届の保留）
+    if (r.batchReminder && n.notifType === "change" && n.status === "submitted" && hasSubInvestigatorMovement(n) && !seriesClosedAfter(db, n)) {
+      items.push({ id: `rm-batch-${n.id}`, kind: "reminder", severity: "low", notificationId: n.id, titleJa: `定期報告 保留：${tag}`, titleEn: `Periodic report pending: ${tag}`, detailJa: `分担医師の異動を含む変更届が${r.batchMonths}か月バッチの保留対象です（終了・中止届の提出でクリア）。`, detailEn: `Change filing with investigator movement is pending the ${r.batchMonths}-month batch.` });
     }
   }
   // 重要度順

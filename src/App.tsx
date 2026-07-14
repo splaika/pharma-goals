@@ -4,23 +4,26 @@ import type { Lang } from "./ctn/types";
 import { getRepository } from "./ctn/data/repository";
 import type { CtnDb } from "./ctn/data/repository";
 import { deriveAlerts } from "./ctn/derive";
-import { USERS, userById, roleLabel } from "./ctn/refData";
+import { USERS, userById, roleLabel, TARGET_CATEGORY, DEV_STATUS } from "./ctn/refData";
 import { Sidebar, type ViewKey } from "./ctn/components/Sidebar";
 import { Dashboard } from "./ctn/components/Dashboard";
 import { NotificationsView } from "./ctn/components/NotificationList";
 import { NotificationDetail } from "./ctn/components/NotificationDetail";
 import { CreateWizard, type CreatePayload } from "./ctn/components/CreateWizard";
 import { MasterView } from "./ctn/components/MasterView";
-import { SeriesView } from "./ctn/components/SeriesView";
+import { ImportView, type ParsedImport } from "./ctn/components/ImportView";
+import { SettingsView } from "./ctn/components/SettingsView";
 import { AuditView } from "./ctn/components/AuditView";
 import { XmlPreview } from "./ctn/components/XmlPreview";
+import { DEFAULT_RULES, setRules, type RuleSettings } from "./ctn/rules";
 import type { Notification } from "./ctn/types";
 
 const TITLES: Record<ViewKey, [string, string]> = {
   dashboard: ["Dashboard", "ダッシュボード"],
   notifications: ["Notifications", "治験届一覧"],
-  series: ["Series", "シリーズ（成分）"],
+  import: ["Import", "データ取り込み"],
   masters: ["Masters", "マスタ管理"],
+  settings: ["Rule settings", "ロジカルチェック設定"],
   audit: ["Audit log", "監査ログ"],
 };
 
@@ -33,6 +36,7 @@ export default function App() {
   const [wizard, setWizard] = useState(false);
   const [xmlFor, setXmlFor] = useState<Notification | null>(null);
   const [toast, setToast] = useState<{ msg: string; err?: boolean } | null>(null);
+  const [rules, setRulesState] = useState<RuleSettings>(() => ({ ...DEFAULT_RULES }));
 
   const t = useMemo(() => makeT(lang), [lang]);
   const repo = getRepository();
@@ -55,6 +59,27 @@ export default function App() {
 
   const openNotif = (id: string) => setSelectedId(id);
   const backToList = () => setSelectedId(null);
+
+  const applyRules = (r: RuleSettings) => {
+    setRules(r); // モジュールのシングルトンへ反映（computeDeadline / deriveAlerts が参照）
+    setRulesState(r); // 再描画してアラート等を再計算
+    flash(t("Rule settings applied", "設定を反映しました"));
+  };
+
+  // 既存ファイル（XML）→ ドラフトとして取り込む
+  const handleImport = async (p: ParsedImport) => {
+    let compoundId = db?.compounds.find((c) => c.compoundCode === p.compoundCode)?.id;
+    if (!compoundId) {
+      const c = await repo.createCompound({ compoundCode: p.compoundCode, targetCategory: TARGET_CATEGORY.drug, trialKind: "医薬品", initReceptNo: "", initNoteDate: "", devStatus: DEV_STATUS.active, sponsorId: db?.sponsors[0]?.id ?? "", drugName: p.compoundCode }, userId);
+      compoundId = c.id;
+    }
+    const n = await repo.createNotification({ compoundId, notifType: p.notifType, createdBy: userId });
+    await repo.updateNotification({ ...n, protocolNo: p.protocolNo ?? n.protocolNo, objectives: p.objectives ?? n.objectives, targetDisease: p.targetDisease ?? n.targetDisease, remarks: p.remarks ?? n.remarks }, userId);
+    await reload();
+    setSelectedId(n.id);
+    setView("notifications");
+    flash(t("Imported as a draft — complete the details.", "ドラフトとして取り込みました。詳細を補完してください。"));
+  };
 
   // ---- ワークフローハンドラ ----
   const handleCreate = async (p: CreatePayload) => {
@@ -165,11 +190,13 @@ export default function App() {
             ) : view === "dashboard" ? (
               <Dashboard db={db} onOpen={openNotif} onNavigate={(v) => setView(v)} />
             ) : view === "notifications" ? (
-              <NotificationsView db={db} onOpen={openNotif} onCreate={() => setWizard(true)} />
-            ) : view === "series" ? (
-              <SeriesView db={db} onOpen={openNotif} onCreate={() => setWizard(true)} />
+              <NotificationsView db={db} onOpen={openNotif} />
+            ) : view === "import" ? (
+              <ImportView onImport={handleImport} />
             ) : view === "masters" ? (
               <MasterView db={db} repo={repo} actorId={userId} reload={reload} flash={flash} />
+            ) : view === "settings" ? (
+              <SettingsView rules={rules} onSave={applyRules} />
             ) : (
               <AuditView db={db} />
             )}

@@ -56,6 +56,7 @@ export interface Sponsor {
   contactTitle: string; // 届出担当者の所属
   telNo: string;
   faxOrMail: string;
+  overseasInfo?: string; // 海外依頼者・外国製造業者情報（邦文4項目＋外国文4項目・該当時のみ）
   active: boolean;
 }
 
@@ -80,6 +81,7 @@ export interface Doctor {
   medSchoolNo: string; // 大学番号（責任医師想定）
   graduationYear: string; // 卒業年
   hasGaiji: boolean; // 外字有無（検出結果）
+  institutionId?: string; // 主たる所属医療機関（運用・表示用）
   active: boolean;
 }
 
@@ -193,6 +195,7 @@ export interface Site {
   smoAddress1?: string;
   smoAddress2?: string;
   smoService?: string;
+  others?: string; // その他（要確認）
   crcStaffId?: string; // 現場担当CRC（運用情報・XML対象外）
   investigators: Investigator[]; // 医師イベント行
   quantities: SiteDrugQty[]; // 施設×薬の数量

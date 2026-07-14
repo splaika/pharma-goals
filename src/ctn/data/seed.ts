@@ -64,18 +64,18 @@ export const IRBS: Irb[] = [
 
 // 4名は外字を含む（原表記→届出用表記）
 export const DOCTORS: Doctor[] = [
-  { id: "doc-1", doctorNo: "D0001", nameOriginal: "佐藤 誠一", nameFiling: "佐藤 誠一", pronounce: "さとう せいいち", medSchoolNo: "12345", graduationYear: "2001", hasGaiji: false, active: true },
-  { id: "doc-2", doctorNo: "D0002", nameOriginal: "髙島 幸雄", nameFiling: "高島 幸雄", pronounce: "たかしま ゆきお", medSchoolNo: "23456", graduationYear: "1998", hasGaiji: true, active: true },
-  { id: "doc-3", doctorNo: "D0003", nameOriginal: "鈴木 一郎", nameFiling: "鈴木 一郎", pronounce: "すずき いちろう", medSchoolNo: "34567", graduationYear: "2005", hasGaiji: false, active: true },
-  { id: "doc-4", doctorNo: "D0004", nameOriginal: "山﨑 玲奈", nameFiling: "山崎 玲奈", pronounce: "やまざき れな", medSchoolNo: "45678", graduationYear: "2008", hasGaiji: true, active: true },
-  { id: "doc-5", doctorNo: "D0005", nameOriginal: "田中 浩二", nameFiling: "田中 浩二", pronounce: "たなか こうじ", medSchoolNo: "56789", graduationYear: "2000", hasGaiji: false, active: true },
-  { id: "doc-6", doctorNo: "D0006", nameOriginal: "伊藤 さゆり", nameFiling: "伊藤 さゆり", pronounce: "いとう さゆり", medSchoolNo: "67890", graduationYear: "2010", hasGaiji: false, active: true },
-  { id: "doc-7", doctorNo: "D0007", nameOriginal: "渡辺 隆", nameFiling: "渡辺 隆", pronounce: "わたなべ たかし", medSchoolNo: "78901", graduationYear: "2003", hasGaiji: false, active: true },
-  { id: "doc-8", doctorNo: "D0008", nameOriginal: "中村 由美", nameFiling: "中村 由美", pronounce: "なかむら ゆみ", medSchoolNo: "89012", graduationYear: "2012", hasGaiji: false, active: true },
-  { id: "doc-9", doctorNo: "D0009", nameOriginal: "小林 大輔", nameFiling: "小林 大輔", pronounce: "こばやし だいすけ", medSchoolNo: "90123", graduationYear: "2004", hasGaiji: false, active: true },
-  { id: "doc-10", doctorNo: "D0010", nameOriginal: "德永 明", nameFiling: "徳永 明", pronounce: "とくなが あきら", medSchoolNo: "11234", graduationYear: "1999", hasGaiji: true, active: true },
-  { id: "doc-11", doctorNo: "D0011", nameOriginal: "加藤 めぐみ", nameFiling: "加藤 めぐみ", pronounce: "かとう めぐみ", medSchoolNo: "22345", graduationYear: "2011", hasGaiji: false, active: true },
-  { id: "doc-12", doctorNo: "D0012", nameOriginal: "濵田 亮", nameFiling: "浜田 亮", pronounce: "はまだ りょう", medSchoolNo: "33456", graduationYear: "2007", hasGaiji: true, active: true },
+  { id: "doc-1", doctorNo: "D0001", nameOriginal: "佐藤 誠一", nameFiling: "佐藤 誠一", pronounce: "さとう せいいち", medSchoolNo: "12345", graduationYear: "2001", hasGaiji: false, institutionId: "inst-1", active: true },
+  { id: "doc-2", doctorNo: "D0002", nameOriginal: "髙島 幸雄", nameFiling: "高島 幸雄", pronounce: "たかしま ゆきお", medSchoolNo: "23456", graduationYear: "1998", hasGaiji: true, institutionId: "inst-1", active: true },
+  { id: "doc-3", doctorNo: "D0003", nameOriginal: "鈴木 一郎", nameFiling: "鈴木 一郎", pronounce: "すずき いちろう", medSchoolNo: "34567", graduationYear: "2005", hasGaiji: false, institutionId: "inst-1", active: true },
+  { id: "doc-4", doctorNo: "D0004", nameOriginal: "山﨑 玲奈", nameFiling: "山崎 玲奈", pronounce: "やまざき れな", medSchoolNo: "45678", graduationYear: "2008", hasGaiji: true, institutionId: "inst-3", active: true },
+  { id: "doc-5", doctorNo: "D0005", nameOriginal: "田中 浩二", nameFiling: "田中 浩二", pronounce: "たなか こうじ", medSchoolNo: "56789", graduationYear: "2000", hasGaiji: false, institutionId: "inst-2", active: true },
+  { id: "doc-6", doctorNo: "D0006", nameOriginal: "伊藤 さゆり", nameFiling: "伊藤 さゆり", pronounce: "いとう さゆり", medSchoolNo: "67890", graduationYear: "2010", hasGaiji: false, institutionId: "inst-2", active: true },
+  { id: "doc-7", doctorNo: "D0007", nameOriginal: "渡辺 隆", nameFiling: "渡辺 隆", pronounce: "わたなべ たかし", medSchoolNo: "78901", graduationYear: "2003", hasGaiji: false, institutionId: "inst-1", active: true },
+  { id: "doc-8", doctorNo: "D0008", nameOriginal: "中村 由美", nameFiling: "中村 由美", pronounce: "なかむら ゆみ", medSchoolNo: "89012", graduationYear: "2012", hasGaiji: false, institutionId: "inst-4", active: true },
+  { id: "doc-9", doctorNo: "D0009", nameOriginal: "小林 大輔", nameFiling: "小林 大輔", pronounce: "こばやし だいすけ", medSchoolNo: "90123", graduationYear: "2004", hasGaiji: false, institutionId: "inst-3", active: true },
+  { id: "doc-10", doctorNo: "D0010", nameOriginal: "德永 明", nameFiling: "徳永 明", pronounce: "とくなが あきら", medSchoolNo: "11234", graduationYear: "1999", hasGaiji: true, institutionId: "inst-4", active: true },
+  { id: "doc-11", doctorNo: "D0011", nameOriginal: "加藤 めぐみ", nameFiling: "加藤 めぐみ", pronounce: "かとう めぐみ", medSchoolNo: "22345", graduationYear: "2011", hasGaiji: false, institutionId: "inst-3", active: true },
+  { id: "doc-12", doctorNo: "D0012", nameOriginal: "濵田 亮", nameFiling: "浜田 亮", pronounce: "はまだ りょう", medSchoolNo: "33456", graduationYear: "2007", hasGaiji: true, institutionId: "inst-5", active: true },
 ];
 
 export const SITE_STAFF: SiteStaff[] = [

@@ -18,9 +18,9 @@ export function MasterView({ db, repo, actorId, reload, flash }: { db: CtnDb; re
   const tabs: [Tab, string, string, number][] = [
     ["institution", "Institutions", "医療機関", db.institutions.length],
     ["doctor", "Doctors", "医師", db.doctors.length],
+    ["staff", "CRC", "CRC", db.siteStaff.length],
     ["irb", "IRB", "IRB", db.irbs.length],
     ["sponsor", "Sponsors", "治験届出者", db.sponsors.length],
-    ["staff", "Coordinators", "現場担当(CRC)", db.siteStaff.length],
   ];
 
   const toggleActive = async (kind: Tab, id: string, active: boolean) => {
@@ -98,7 +98,7 @@ export function MasterView({ db, repo, actorId, reload, flash }: { db: CtnDb; re
         <InstForm rec={editing.rec as Institution | null} onClose={() => setEditing(null)} onSave={async (rec, isNew) => { if (isNew) await repo.createInstitution(rec as Omit<Institution, "id">, actorId); else await repo.updateInstitution(rec as Institution, actorId); await reload(); setEditing(null); flash(t("Saved", "保存しました")); }} />
       )}
       {editing?.kind === "doctor" && (
-        <DocForm rec={editing.rec as Doctor | null} onClose={() => setEditing(null)} onSave={saveDoctor} />
+        <DocForm db={db} rec={editing.rec as Doctor | null} onClose={() => setEditing(null)} onSave={saveDoctor} />
       )}
       {editing?.kind === "irb" && (
         <IrbForm rec={editing.rec as Irb | null} onClose={() => setEditing(null)} onSave={async (rec, isNew) => { if (isNew) await repo.createIrb(rec as Omit<Irb, "id">, actorId); else await repo.updateIrb(rec as Irb, actorId); await reload(); setEditing(null); flash(t("Saved", "保存しました")); }} />
@@ -150,17 +150,18 @@ function InstTable({ db, onEdit, onToggle }: { db: CtnDb; onEdit: (r: Institutio
 
 function DocTable({ db, onEdit, onToggle }: { db: CtnDb; onEdit: (r: Doctor) => void; onToggle: (id: string, a: boolean) => void }) {
   const { t } = useLang();
+  const instName = (id?: string) => (id ? db.institutions.find((i) => i.id === id)?.name ?? "—" : "—");
   return (
     <table className="mtbl">
-      <thead><tr><th>ID</th><th>{t("Filing name", "届出用表記")}</th><th>{t("Original", "原表記")}</th><th>{t("Kana", "よみかな")}</th><th>{t("School / grad", "大学番号・卒業年")}</th><th>{t("Gaiji", "外字")}</th><th></th></tr></thead>
+      <thead><tr><th>ID</th><th>{t("Filing name", "届出用表記")}</th><th>{t("Original", "原表記")}</th><th>{t("Institution", "所属医療機関")}</th><th>{t("Kana", "よみかな")}</th><th>{t("Gaiji", "外字")}</th><th></th></tr></thead>
       <tbody>
         {db.doctors.map((r) => (
           <tr key={r.id} className={r.active ? "" : "inactive"}>
             <td className="muted">{r.doctorNo}</td>
             <td className="nm">{r.nameFiling}{!r.active && <span className="del-badge">論理削除</span>}</td>
             <td className={r.nameOriginal !== r.nameFiling ? "gaiji-orig-cell" : "muted"}>{r.nameOriginal}</td>
+            <td className="small">{instName(r.institutionId)}</td>
             <td className="muted small">{r.pronounce}</td>
-            <td className="muted small">{r.medSchoolNo} / {r.graduationYear}</td>
             <td>{r.hasGaiji ? <span className="gaiji-flag">⚠ 外字</span> : <span className="muted">—</span>}</td>
             <td className="acts"><button className="icon-btn" onClick={() => onEdit(r)}>{Icon.edit}</button><ActiveCell active={r.active} onToggle={(a) => onToggle(r.id, a)} /></td>
           </tr>
@@ -235,7 +236,7 @@ function StaffTable({ db, onEdit, onToggle }: { db: CtnDb; onEdit: (r: SiteStaff
 // ===========================================================================
 function useForm<T>(init: T) {
   const [v, setV] = useState<T>(init);
-  const on = <K extends keyof T>(k: K) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((s) => ({ ...s, [k]: (e.target as HTMLInputElement).value }));
+  const on = <K extends keyof T>(k: K) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   return { v, setV, on };
 }
 
@@ -260,21 +261,22 @@ function InstForm({ rec, onClose, onSave }: { rec: Institution | null; onClose: 
   );
 }
 
-function DocForm({ rec, onClose, onSave }: { rec: Doctor | null; onClose: () => void; onSave: (r: Doctor | Omit<Doctor, "id">, isNew: boolean) => void }) {
+function DocForm({ db, rec, onClose, onSave }: { db: CtnDb; rec: Doctor | null; onClose: () => void; onSave: (r: Doctor | Omit<Doctor, "id">, isNew: boolean) => void }) {
   const { t } = useLang();
-  const { v, on, setV } = useForm<Omit<Doctor, "id">>(rec ?? { doctorNo: "", nameOriginal: "", nameFiling: "", pronounce: "", medSchoolNo: "", graduationYear: "", hasGaiji: false, active: true });
+  const { v, on, setV } = useForm<Omit<Doctor, "id">>(rec ?? { doctorNo: "", nameOriginal: "", nameFiling: "", pronounce: "", medSchoolNo: "", graduationYear: "", hasGaiji: false, institutionId: db.institutions[0]?.id ?? "", active: true });
   const hits = detectGaiji(v.nameOriginal);
   return (
     <Modal title={rec ? t("Edit doctor", "医師を編集") : t("Register doctor", "医師を登録")} sub={t("Original / filing-form name (two-tier). Gaiji is detected on save.", "原表記／届出用表記の二段構え。保存時に外字を検出します。")} onClose={onClose} footer={<FormFooter onClose={onClose} onSave={() => onSave(rec ? { ...v, id: rec.id } : v, !rec)} />}>
       <div className="form-grid">
         <Field label={t("Display ID", "医師表示ID")} mark="auto"><input className="tin" value={v.doctorNo} onChange={on("doctorNo")} placeholder="自動採番（未入力可）" /></Field>
-        <Field label={t("Name (original)", "氏名（原表記）")} mark="always" hint={hits.length ? `⚠ 外字検出: ${hits.map((h) => h.char).join(" ")}` : ""}><input className="tin" value={v.nameOriginal} onChange={(e) => { on("nameOriginal")(e); }} placeholder="例：髙島 幸雄" /></Field>
-        <Field label={t("Name (filing)", "氏名（届出用表記）")} mark="always" hint={t("Blank → auto-normalized on save", "空欄なら保存時に自動正規化")}><input className="tin" value={v.nameFiling} onChange={on("nameFiling")} placeholder="例：高島 幸雄" /></Field>
-        <Field label={t("Kana", "よみかな")} mark="always"><input className="tin" value={v.pronounce} onChange={on("pronounce")} /></Field>
-        <Field label={t("Medical school no.", "大学番号")}><input className="tin" value={v.medSchoolNo} onChange={on("medSchoolNo")} /></Field>
-        <Field label={t("Graduation year", "卒業年")}><input className="tin" value={v.graduationYear} onChange={on("graduationYear")} /></Field>
+        <Field label={t("Institution", "所属医療機関")} mark="optional"><select className="sel" value={v.institutionId ?? ""} onChange={(e) => setV((s) => ({ ...s, institutionId: e.target.value || undefined }))}><option value="">—</option>{db.institutions.filter((i) => i.active).map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}</select></Field>
+        <Field label={t("Name (original)", "氏名（原表記）")} mark="always" hint={hits.length ? `⚠ 外字検出: ${hits.map((h) => h.char).join(" ")}` : "Unicode・サロゲートペア可"}><input className="tin" value={v.nameOriginal} onChange={(e) => { on("nameOriginal")(e); }} placeholder="例：髙島 幸雄" /></Field>
+        <Field label={t("Name (filing)", "氏名（届出用表記）")} mark="always" hint={t("JIS L1/L2 only — blank → auto-normalized on save", "JIS第1・第2水準のみ。空欄なら保存時に自動正規化")}><input className="tin" value={v.nameFiling} onChange={on("nameFiling")} placeholder="例：高島 幸雄" /></Field>
+        <Field label={t("Kana", "よみかな")} mark="always" hint="全角50/半角100バイト"><input className="tin" value={v.pronounce} onChange={on("pronounce")} /></Field>
+        <Field label={t("Medical school no.", "大学番号")} mark="optional"><input className="tin" value={v.medSchoolNo} onChange={on("medSchoolNo")} placeholder="コード表（責任医師想定）" /></Field>
+        <Field label={t("Graduation year", "卒業年")} mark="optional"><input className="tin" value={v.graduationYear} onChange={on("graduationYear")} /></Field>
       </div>
-      <label className="chk"><input type="checkbox" checked={v.hasGaiji} onChange={(e) => setV((s) => ({ ...s, hasGaiji: e.target.checked }))} /> {t("Contains gaiji", "外字を含む")}</label>
+      <label className="chk"><input type="checkbox" checked={v.hasGaiji} onChange={(e) => setV((s) => ({ ...s, hasGaiji: e.target.checked }))} /> {t("Contains gaiji (auto-detected)", "外字を含む（自動検出）")}</label>
     </Modal>
   );
 }
@@ -310,6 +312,7 @@ function SponsorForm({ rec, onClose, onSave }: { rec: Sponsor | null; onClose: (
         <Field label={t("Contact title", "届出担当者の所属")} mark="always"><input className="tin" value={v.contactTitle} onChange={on("contactTitle")} /></Field>
         <Field label={t("Tel", "電話番号")} mark="always"><input className="tin" value={v.telNo} onChange={on("telNo")} /></Field>
         <Field label={t("Fax / mail", "FAX番号又はメールアドレス")} mark="always"><input className="tin" value={v.faxOrMail} onChange={on("faxOrMail")} /></Field>
+        <Field label={t("Overseas sponsor / foreign manufacturer", "海外依頼者・外国製造業者情報")} mark="conditional" unconfirmed wide hint={t("Japanese 4 items + foreign 4 items — only when applicable", "邦文4項目＋外国文4項目・該当時のみ")}><textarea className="ta" value={v.overseasInfo ?? ""} onChange={on("overseasInfo")} /></Field>
       </div>
     </Modal>
   );
@@ -319,7 +322,7 @@ function StaffForm({ db, rec, onClose, onSave }: { db: CtnDb; rec: SiteStaff | n
   const { t } = useLang();
   const { v, on, setV } = useForm<Omit<SiteStaff, "id">>(rec ?? { name: "", kana: "", role: "CRC", institutionId: db.institutions[0]?.id ?? "", telNo: "", mail: "", active: true });
   return (
-    <Modal title={rec ? t("Edit coordinator", "現場担当を編集") : t("Register coordinator", "現場担当を登録")} onClose={onClose} footer={<FormFooter onClose={onClose} onSave={() => onSave(rec ? { ...v, id: rec.id } : v, !rec)} />}>
+    <Modal title={rec ? t("Edit CRC", "CRCを編集") : t("Register CRC", "CRCを登録")} onClose={onClose} footer={<FormFooter onClose={onClose} onSave={() => onSave(rec ? { ...v, id: rec.id } : v, !rec)} />}>
       <div className="form-grid">
         <Field label={t("Name", "氏名")} mark="always"><input className="tin" value={v.name} onChange={on("name")} /></Field>
         <Field label={t("Kana", "よみかな")} mark="optional"><input className="tin" value={v.kana} onChange={on("kana")} /></Field>
