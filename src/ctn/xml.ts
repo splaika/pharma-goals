@@ -85,8 +85,8 @@ export function generateCtnXml(n: Notification, ctx: XmlContext): string {
   x.leaf("OBJECTIVES", n.objectives);
   x.leaf("TARGETDISEASE", n.targetDisease);
 
-  // ---- 治験届出者（INFOPERSONFILLNOTE / SERIALNO1） ----
-  x.open("INFOPERSONFILLNOTE", { SERIALNO1: 1 });
+  // ---- 治験届出者（INFOPERSONFILLNOTE / SERIALNO1・ADD型） ----
+  x.open("INFOPERSONFILLNOTE", { SERIALNO1: 1, STATUS: "ADD" });
   x.leaf("SPONSORNAME", ctx.sponsor.name);
   x.leaf("REPNAME", ctx.sponsor.repName);
   x.leaf("MANUFACTURERCODE", ctx.sponsor.manufacturerCode);
@@ -125,7 +125,8 @@ export function generateCtnXml(n: Notification, ctx: XmlContext): string {
     x.leaf("PLANNEDSUBJECTS", s.plannedSubjects);
     if (s.enrolledSubjects != null) x.leaf("ENROLLEDSUBJECTS", s.enrolledSubjects);
     if (irb) {
-      x.open("INFOIRB", {});
+      // INFOIRB（孫・SERIALNO2・ADD型）。各施設は単一IRBを参照するため SERIALNO2=1。
+      x.open("INFOIRB", { SERIALNO2: 1, STATUS: "ADD" });
       x.leaf("IRBTYPE", irb.irbType);
       x.leaf("OWNERNAME", irb.ownerName);
       x.close("INFOIRB");
@@ -187,7 +188,8 @@ export function validateAgainstSubset(n: Notification, xml: string): XsdCheck {
   const isTerminal = n.notifType === "termination" || n.notifType === "completion";
   const needsPlanFields = n.notifType === "plan" || n.notifType === "change";
 
-  if (!n.studyDrugs.some((d) => d.drugRole === DRUG_ROLE.main))
+  // 開発中止届は治験使用薬・実施医療機関ともに対象外（requiredByType「―」）
+  if (n.notifType !== "devDiscontinuation" && !n.studyDrugs.some((d) => d.drugRole === DRUG_ROLE.main))
     errors.push("主たる被験薬が1行必要です（1届1行）。");
   if (n.studyDrugs.filter((d) => d.drugRole === DRUG_ROLE.main).length > 1)
     errors.push("主たる被験薬は1行のみ許可されます。");

@@ -19,6 +19,7 @@ import {
   diffRoster,
 } from "./logic";
 import { generateCtnXml, validateAgainstSubset, type XmlContext } from "./xml";
+import { deriveAlerts, hasSubInvestigatorMovement } from "./derive";
 import { KUBUN, DRUG_ROLE, DOCTOR_ROLE, CHANGE_TYPE } from "./refData";
 import { makeSeedDb } from "./data/seed";
 import type { Notification } from "./types";
@@ -173,9 +174,41 @@ describe("XML生成・XSD検証 (S15) — 分岐ルール", () => {
     expect(check.ok).toBe(true);
     expect(check.elementCount).toBeGreaterThan(20);
   });
-  it("主たる被験薬が無いXMLは不正", () => {
+  it("主たる被験薬が無いXMLは不正（計画届）", () => {
     const bad: Notification = { ...byId("nt-abc-1"), studyDrugs: [] };
     const check = validateAgainstSubset(bad, generateCtnXml(bad, ctx()));
     expect(check.ok).toBe(false);
+  });
+  it("開発中止届は治験使用薬・施設が無くても妥当（対象外）", () => {
+    const dev = byId("nt-klm-2"); // studyDrugs=[], sites=[]
+    const check = validateAgainstSubset(dev, generateCtnXml(dev, {
+      compound: db.compounds.find((c) => c.id === "cmp-klm")!,
+      sponsor: db.sponsors.find((s) => s.id === "sp-1")!,
+      institutions: new Map(db.institutions.map((i) => [i.id, i])),
+      irbs: new Map(db.irbs.map((i) => [i.id, i])),
+    }));
+    expect(check.ok).toBe(true);
+  });
+});
+
+describe("ダッシュボード導出", () => {
+  it("12か月バッチは分担医師の異動のみを対象（責任医師の異動は対象外）", () => {
+    const change: Notification = {
+      ...structuredClone(byId("nt-abc-2")),
+      sites: [{ ...structuredClone(byId("nt-abc-2").sites[0]), investigators: [
+        { ...byId("nt-abc-2").sites[0].investigators[0], doctorRole: DOCTOR_ROLE.responsible, changeType: CHANGE_TYPE.add },
+      ] }],
+    };
+    expect(hasSubInvestigatorMovement(change)).toBe(false);
+    change.sites[0].investigators[0].doctorRole = DOCTOR_ROLE.sub;
+    expect(hasSubInvestigatorMovement(change)).toBe(true);
+  });
+  it("PMDA照会の回答期限超過は負の残日数を出さない", () => {
+    const withOverdue = structuredClone(byId("nt-abc-1"));
+    withOverdue.inquiries = [{ id: "iq", inquiryDate: "2026-06-01", inquiryContent: "照会", responseDeadline: "2026-07-01", hasReplacement: false }];
+    const alerts = deriveAlerts({ ...db, notifications: [withOverdue] }, "2026-07-14");
+    const inq = alerts.find((a) => a.id === "rm-inq-iq")!;
+    expect(inq.detailJa).toContain("超過");
+    expect(inq.detailJa).not.toContain("残り -");
   });
 });

@@ -71,10 +71,11 @@ export default function App() {
     flash(t("Filing created — edit the differences.", "届を作成しました。差分を編集してください。"));
   };
 
-  const handleSave = async (n: Notification) => {
-    await repo.updateNotification(n, userId);
+  const handleSave = async (n: Notification): Promise<Notification> => {
+    const saved = await repo.updateNotification(n, userId);
     await reload();
     flash(t("Saved", "保存しました"));
+    return saved; // サーバー確定後の順序番号を detail の draft へ反映する
   };
   const handleSendReview = async (id: string) => {
     await repo.sendForReview(id, userId);
@@ -149,7 +150,7 @@ export default function App() {
           <div className="scroll">
             {selected ? (
               <NotificationDetail
-                key={`${selected.id}-${selected.status}-${selected.xmlGeneratedAt ?? ""}`}
+                key={selected.id}
                 notification={selected}
                 db={db}
                 user={user}

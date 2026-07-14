@@ -3,15 +3,19 @@
 // これらは永続化しない。届出データから都度算出する。
 // ============================================================================
 import { computeDeadline } from "./logic";
-import { CHANGE_TYPE, daysUntil, TODAY } from "./refData";
+import { CHANGE_TYPE, DOCTOR_ROLE, daysUntil, TODAY } from "./refData";
 import type { AlertItem, Compound, Notification, StatusKey } from "./types";
 import type { CtnDb } from "./data/repository";
 
 export const notifDeadline = (n: Notification): string | undefined => computeDeadline(n);
 
-/** 分担/責任医師の異動（追加・削除）を含むか */
-export const hasInvestigatorMovement = (n: Notification): boolean =>
-  n.sites.some((s) => s.investigators.some((iv) => iv.changeType === CHANGE_TYPE.add || iv.changeType === CHANGE_TYPE.remove));
+/** 分担医師の異動（追加・削除）を含むか。12か月バッチは分担医師の異動のみが対象。 */
+export const hasSubInvestigatorMovement = (n: Notification): boolean =>
+  n.sites.some((s) =>
+    s.investigators.some(
+      (iv) => iv.doctorRole === DOCTOR_ROLE.sub && (iv.changeType === CHANGE_TYPE.add || iv.changeType === CHANGE_TYPE.remove)
+    )
+  );
 
 /** シリーズに、この届より後に提出された終了/中止届があるか（保留クリア判定） */
 function seriesClosedAfter(db: CtnDb, n: Notification): boolean {
@@ -51,12 +55,23 @@ export function deriveAlerts(db: CtnDb, today = TODAY): AlertItem[] {
       if (q.responseDate) continue;
       const qd = daysUntil(q.responseDeadline, today);
       if (qd != null && qd <= 21) {
-        items.push({ id: `rm-inq-${q.id}`, kind: "reminder", severity: qd <= 7 ? "high" : "med", notificationId: n.id, dueDate: q.responseDeadline, titleJa: `PMDA照会 回答期限：${tag}`, titleEn: `PMDA inquiry due: ${tag}`, detailJa: `照会「${q.inquiryContent}」の回答期限まで残り ${qd} 日。`, detailEn: `Response due in ${qd} days.` });
+        const overdue = qd < 0;
+        items.push({
+          id: `rm-inq-${q.id}`,
+          kind: "reminder",
+          severity: overdue || qd <= 7 ? "high" : "med",
+          notificationId: n.id,
+          dueDate: q.responseDeadline,
+          titleJa: `PMDA照会 回答期限${overdue ? "超過" : ""}：${tag}`,
+          titleEn: `PMDA inquiry ${overdue ? "overdue" : "due"}: ${tag}`,
+          detailJa: overdue ? `照会「${q.inquiryContent}」の回答期限を ${-qd} 日超過しています。` : `照会「${q.inquiryContent}」の回答期限まで残り ${qd} 日。`,
+          detailEn: overdue ? `Inquiry response is ${-qd} days overdue.` : `Response due in ${qd} days.`,
+        });
       }
     }
 
     // 12か月バッチ（分担医師の異動を含む変更届の定期報告 保留）
-    if (n.notifType === "change" && n.status === "submitted" && hasInvestigatorMovement(n) && !seriesClosedAfter(db, n)) {
+    if (n.notifType === "change" && n.status === "submitted" && hasSubInvestigatorMovement(n) && !seriesClosedAfter(db, n)) {
       items.push({ id: `rm-batch-${n.id}`, kind: "reminder", severity: "low", notificationId: n.id, titleJa: `定期報告 保留：${tag}`, titleEn: `Periodic report pending: ${tag}`, detailJa: "分担医師の異動を含む変更届が12か月バッチの保留対象です（終了・中止届の提出でクリア）。", detailEn: "Change filing with investigator movement is pending the 12-month batch." });
     }
   }

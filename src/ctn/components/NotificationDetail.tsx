@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLang } from "../../i18n";
 import { columnOf, requiredFor, shouldShow, isRequired } from "../schema";
 import {
@@ -29,7 +29,7 @@ import { Section, Field, StatusPill, TypeBadge, Btn, Icon, UnconfirmedBadge } fr
 import type { CtnDb } from "../data/repository";
 import type { Investigator, Notification, Site, SiteDrugQty, StudyDrug } from "../types";
 
-type Cb = (n: Notification) => Promise<void> | void;
+type Cb = (n: Notification) => Promise<Notification | void> | Notification | void;
 
 export function NotificationDetail({
   notification,
@@ -88,8 +88,19 @@ export function NotificationDetail({
 
   const jobSepBlocked = draft.createdBy === user.id;
 
+  // サーバーのワークフロー遷移（レビュー送付・承認・提出・XML生成）で親から新しい
+  // notification が来たら draft を同期する。未保存編集の黙殺を避けるため、mount key は
+  // App 側で id のみに固定し、遷移の検知はここで status / xmlGeneratedAt を見て行う。
+  useEffect(() => {
+    setDraft(structuredClone(notification));
+    setDirty(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notification.status, notification.xmlGeneratedAt]);
+
   const save = async () => {
-    await onSave(draft);
+    // 保存後にサーバーが確定した順序番号などを draft へ反映（XMLプレビューの SERIALNO 整合）
+    const saved = await onSave(draft);
+    if (saved) setDraft(structuredClone(saved));
     setDirty(false);
   };
 
@@ -116,8 +127,14 @@ export function NotificationDetail({
     });
   const rmStudyDrug = (id: string) =>
     set((n) => {
+      const removed = n.studyDrugs.find((d) => d.id === id);
       n.studyDrugs = n.studyDrugs.filter((d) => d.id !== id);
       for (const s of n.sites) s.quantities = s.quantities.filter((q) => q.studyDrugId !== id);
+      // 「1届1行の主たる被験薬」を維持：主たる被験薬を削除したら残りの先頭を主へ昇格
+      if (removed?.drugRole === DRUG_ROLE.main && n.studyDrugs.length > 0 && !n.studyDrugs.some((d) => d.drugRole === DRUG_ROLE.main)) {
+        n.studyDrugs[0].drugRole = DRUG_ROLE.main;
+        n.studyDrugs[0].combCategory = undefined;
+      }
     });
 
   // ---------- 実施医療機関 ----------
@@ -127,7 +144,8 @@ export function NotificationDetail({
       const nsite: Site = {
         id: `site-${Math.random().toString(36).slice(2, 8)}`,
         institutionId: inst?.id ?? "",
-        serialNo: n.sites.length + 1,
+        serialNo: 0, // サーバー（finalizeSerials）が SERIALNO1 を確定
+
         department: "",
         plannedSubjects: 0,
         irbId: activeIrbs[0]?.id ?? "",
@@ -204,9 +222,9 @@ export function NotificationDetail({
         </div>
         <div className="detail-actions">
           {editable && <Btn kind="p" small onClick={save} disabled={!dirty}>{Icon.check} {t("Save", "保存")}</Btn>}
-          {draft.status === "draft" && <Btn small onClick={() => onSendReview(draft.id)}>{t("Send for review", "レビュー送付")}</Btn>}
+          {draft.status === "draft" && <Btn small onClick={() => onSendReview(draft.id)} disabled={dirty} title={dirty ? "先に保存してください" : ""}>{t("Send for review", "レビュー送付")}</Btn>}
           {draft.status === "review" && (
-            <Btn kind="p" small onClick={() => onApprove(draft.id)} title={jobSepBlocked ? "職務分離：起票者は承認できません" : ""}>{t("Approve", "承認")}</Btn>
+            <Btn kind="p" small onClick={() => onApprove(draft.id)} disabled={dirty} title={dirty ? "先に保存してください" : jobSepBlocked ? "職務分離：起票者は承認できません" : ""}>{t("Approve", "承認")}</Btn>
           )}
           {draft.status === "approved" && <Btn kind="p" small onClick={() => onSubmit(draft.id)}>{t("Submit", "提出")}</Btn>}
           <Btn small onClick={() => onGenerateXml(draft)}>{Icon.doc} XML{t(" preview", "プレビュー")}</Btn>
@@ -314,7 +332,13 @@ export function NotificationDetail({
           </div>
           {show("cr_objectives") && <Field label={t("Objectives", "目的")} mark={mk("cr_objectives")} wide><textarea className="ta" value={draft.objectives} disabled={!editable} onChange={(e) => set((n) => (n.objectives = e.target.value))} /></Field>}
           {show("cr_targetdisease") && <Field label={t("Target disease (main drug)", "主たる被験薬の対象疾患")} mark={mk("cr_targetdisease")} wide><input className="tin" value={draft.targetDisease} disabled={!editable} onChange={(e) => set((n) => (n.targetDisease = e.target.value))} /></Field>}
-          <Field label={t("Remarks", "備考（通信欄）")} mark={mk("cr_remarks")} wide><textarea className="ta" value={draft.remarks ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.remarks = e.target.value))} /></Field>
+        </Section>
+      )}
+
+      {/* ===== 備考（全種別。開発中止届では必須◎のためセクションから独立させる） ===== */}
+      {show("cr_remarks") && (
+        <Section title={t("Remarks", "備考")}>
+          <Field label={t("Remarks", "備考（通信欄）")} mark={mk("cr_remarks")} wide><textarea className="ta" value={draft.remarks ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.remarks = e.target.value))} placeholder={draft.notifType === "devDiscontinuation" ? "開発中止届では実質必須（中止の経緯・以降の対応等）" : ""} /></Field>
         </Section>
       )}
 
@@ -434,7 +458,7 @@ function SiteCard({
   return (
     <div className="sitecard">
       <div className="sitecard-h">
-        <div className="site-serial">{t("Site", "施設")} #{site.serialNo}</div>
+        <div className="site-serial">{t("Site", "施設")} {site.serialNo > 0 ? `#${site.serialNo}` : t("(new)", "（採番前）")}</div>
         <select className="sel sel-sm" value={site.institutionId} disabled={!editable} onChange={(e) => onField((s) => (s.institutionId = e.target.value))}>
           {activeInstitutions.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
         </select>

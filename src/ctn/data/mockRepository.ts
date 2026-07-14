@@ -178,6 +178,10 @@ export class MockCtnRepository implements CtnRepository {
 
   /** 未採番（serialNo<=0）の順序番号を確定する（サーバー正本） */
   private finalizeSerials(n: Notification) {
+    // 実施医療機関の順序番号（SERIALNO1・届内）をサーバーで確定（クライアント採番を信頼しない）
+    let maxSite = Math.max(0, ...n.sites.map((s) => (s.serialNo > 0 ? s.serialNo : 0)));
+    for (const s of n.sites) if (s.serialNo <= 0) s.serialNo = ++maxSite;
+
     const series = this.seriesNotifs(n.compoundId).filter((x) => x.id !== n.id);
     const known = new Set(seriesStudyDrugSerials(series));
     for (const d of n.studyDrugs) known.add(d.serialNo > 0 ? d.serialNo : -1);
@@ -254,7 +258,8 @@ export class MockCtnRepository implements CtnRepository {
         enrolledSubjects: undefined,
         investigators: s.investigators
           .filter((iv) => iv.changeType !== 100001002) // 前届で削除済みは持ち越さない
-          .map((iv) => ({ ...clone(iv), id: `inv-${this.nid()}`, changeType: 100001003, changeDate: undefined, changeReason: undefined })),
+          // イベント行型：新しい届では順序番号を採番し直す（serialNo=0 → finalizeSerials で確定）
+          .map((iv) => ({ ...clone(iv), id: `inv-${this.nid()}`, serialNo: 0, changeType: 100001003, changeDate: undefined, changeReason: undefined })),
         quantities: s.quantities.map((q) => ({ ...clone(q), qtySupplied: undefined, qtyUsed: undefined, qtyWithdrawn: undefined, qtyAbrogated: undefined })),
       }));
     }
