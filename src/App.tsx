@@ -1,147 +1,189 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Goal, Lang } from "./types";
 import { LangContext, makeT } from "./i18n";
-import { getRepository } from "./data/repository";
-import { Sidebar, type ViewKey } from "./components/Sidebar";
-import { Overview } from "./components/Overview";
-import { GoalsView } from "./components/GoalsView";
-import { ReportView } from "./components/ReportView";
-import { GoalDrawer, type DrawerResult } from "./components/GoalDrawer";
-import type { FilterState } from "./components/Filters";
+import type { Lang } from "./ctn/types";
+import { getRepository } from "./ctn/data/repository";
+import type { CtnDb } from "./ctn/data/repository";
+import { deriveAlerts } from "./ctn/derive";
+import { USERS, userById, roleLabel } from "./ctn/refData";
+import { Sidebar, type ViewKey } from "./ctn/components/Sidebar";
+import { Dashboard } from "./ctn/components/Dashboard";
+import { NotificationsView } from "./ctn/components/NotificationList";
+import { NotificationDetail } from "./ctn/components/NotificationDetail";
+import { CreateWizard, type CreatePayload } from "./ctn/components/CreateWizard";
+import { MasterView } from "./ctn/components/MasterView";
+import { SeriesView } from "./ctn/components/SeriesView";
+import { AuditView } from "./ctn/components/AuditView";
+import { XmlPreview } from "./ctn/components/XmlPreview";
+import type { Notification } from "./ctn/types";
 
-const NEW_GOAL = (dept: string): Goal => ({
-  id: "__new__",
-  parent: null,
-  level: "individual",
-  dept,
-  titleEn: "",
-  titleJa: "",
-  owner: "Kenji Takahashi",
-  av: "KT",
-  status: "g",
-  monthly: [],
-  log: [],
-});
+const TITLES: Record<ViewKey, [string, string]> = {
+  dashboard: ["Dashboard", "ダッシュボード"],
+  notifications: ["Notifications", "治験届一覧"],
+  series: ["Series", "シリーズ（成分）"],
+  masters: ["Masters", "マスタ管理"],
+  audit: ["Audit log", "監査ログ"],
+};
 
 export default function App() {
-  const [lang, setLang] = useState<Lang>("en");
-  const [view, setView] = useState<ViewKey>("overview");
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterState>({ dept: "all", level: "all", view: "cascade" });
-  const [editing, setEditing] = useState<{ goal: Goal; isNew: boolean } | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [lang, setLang] = useState<Lang>("ja");
+  const [view, setView] = useState<ViewKey>("dashboard");
+  const [db, setDb] = useState<CtnDb | null>(null);
+  const [userId, setUserId] = useState<string>("u-a");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [wizard, setWizard] = useState(false);
+  const [xmlFor, setXmlFor] = useState<Notification | null>(null);
+  const [toast, setToast] = useState<{ msg: string; err?: boolean } | null>(null);
 
   const t = useMemo(() => makeT(lang), [lang]);
   const repo = getRepository();
+  const user = userById(userId)!;
 
   useEffect(() => {
     document.body.classList.toggle("ja", lang === "ja");
   }, [lang]);
 
-  const reload = async () => setGoals(await repo.listGoals());
-
+  const reload = async () => setDb(await repo.getState());
   useEffect(() => {
-    (async () => {
-      await reload();
-      setLoading(false);
-    })();
+    void reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const flash = (m: string) => {
-    setToast(m);
-    window.setTimeout(() => setToast(null), 2300);
+  const flash = (msg: string, err = false) => {
+    setToast({ msg, err });
+    window.setTimeout(() => setToast(null), 3000);
   };
 
-  const openNew = () => setEditing({ goal: NEW_GOAL(filter.dept !== "all" ? filter.dept : "ds"), isNew: true });
-  const openGoal = (id: string) => {
-    const g = goals.find((x) => x.id === id);
-    if (g) setEditing({ goal: g, isNew: false });
-  };
+  const openNotif = (id: string) => setSelectedId(id);
+  const backToList = () => setSelectedId(null);
 
-  const handleSave = async (r: DrawerResult) => {
-    if (r.isNew) {
-      const { id: _drop, ...base } = r.goal;
-      void _drop;
-      await repo.createGoal({ ...base, monthly: [r.monthEntry], log: [r.change] });
-    } else {
-      await repo.updateGoal(r.goal);
-      await repo.upsertMonthly(r.goal.id, r.monthEntry);
-      await repo.addChange(r.goal.id, r.change);
+  // ---- ワークフローハンドラ ----
+  const handleCreate = async (p: CreatePayload) => {
+    let compoundId = p.compoundId;
+    if (p.newCompound) {
+      const c = await repo.createCompound(p.newCompound, userId);
+      compoundId = c.id;
     }
+    if (!compoundId) return;
+    const n = await repo.createNotification({ compoundId, notifType: p.notifType, createdBy: userId });
     await reload();
-    setEditing(null);
-    flash(r.isNew ? t("Goal added", "目標を追加しました") : t("Saved", "保存しました"));
+    setWizard(false);
+    setSelectedId(n.id);
+    flash(t("Filing created — edit the differences.", "届を作成しました。差分を編集してください。"));
   };
 
+  const handleSave = async (n: Notification) => {
+    await repo.updateNotification(n, userId);
+    await reload();
+    flash(t("Saved", "保存しました"));
+  };
+  const handleSendReview = async (id: string) => {
+    await repo.sendForReview(id, userId);
+    await reload();
+    flash(t("Sent for review", "社内レビューへ送付しました"));
+  };
+  const handleApprove = async (id: string) => {
+    try {
+      await repo.approveNotification(id, userId);
+      await reload();
+      flash(t("Approved", "承認しました"));
+    } catch (e) {
+      flash((e as Error).message, true);
+    }
+  };
+  const handleSubmit = async (id: string) => {
+    try {
+      await repo.submitNotification(id, userId);
+      await reload();
+      flash(t("Submitted", "提出しました（順序番号を確定）"));
+    } catch (e) {
+      flash((e as Error).message, true);
+    }
+  };
   const handleDelete = async (id: string) => {
-    await repo.deleteGoal(id);
+    try {
+      await repo.deleteNotification(id, userId);
+      await reload();
+      setSelectedId(null);
+      flash(t("Deleted", "削除しました"));
+    } catch (e) {
+      flash((e as Error).message, true);
+    }
+  };
+  const handleXmlGenerated = async (n: Notification) => {
+    await repo.markXmlGenerated(n.id, userId);
     await reload();
-    setEditing(null);
-    flash(t("Goal deleted", "目標を削除しました"));
+    setXmlFor(null);
+    flash(t("XML generated & validated", "XMLを生成・検証しました"));
   };
 
-  const TITLES: Record<ViewKey, [string, string]> = {
-    overview: ["Overview", "サマリー"],
-    goals: ["Goals", "目標"],
-    report: ["Report", "レポート"],
-  };
+  if (!db) return <div className="boot">Loading…</div>;
+
+  const alerts = deriveAlerts(db);
+  const selected = selectedId ? db.notifications.find((n) => n.id === selectedId) ?? null : null;
 
   return (
-    <LangContext.Provider value={{ lang, setLang, t }}>
+    <LangContext.Provider value={{ lang, setLang: (l) => setLang(l as Lang), t }}>
       <div className={`app${lang === "ja" ? " ja" : ""}`}>
-        <Sidebar view={view} onNavigate={setView} />
+        <Sidebar view={view} onNavigate={(v) => { setSelectedId(null); setView(v); }} user={user} badges={{ dashboard: alerts.length }} />
         <div className="main">
           <header className="top">
-            <h1>{t(...TITLES[view])}</h1>
+            <h1>{selected ? t("Filing detail", "治験届 詳細") : t(...TITLES[view])}</h1>
             <div className="sp" />
-            <div className="lang">
-              <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>
-                EN
-              </button>
-              <button className={lang === "ja" ? "on" : ""} onClick={() => setLang("ja")}>
-                JA
-              </button>
+            {/* ユーザー切替（職務分離のデモ） */}
+            <div className="user-switch">
+              <span className="us-label">{t("Acting as", "操作ユーザー")}</span>
+              <select className="sel" value={userId} onChange={(e) => setUserId(e.target.value)}>
+                {USERS.map((u) => <option key={u.id} value={u.id}>{u.name}（{t(roleLabel[u.role][0], roleLabel[u.role][1])}）</option>)}
+              </select>
             </div>
-            <button className="btn btn-p" onClick={openNew}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              {t("Add goal", "目標を追加")}
+            <div className="lang">
+              <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
+              <button className={lang === "ja" ? "on" : ""} onClick={() => setLang("ja")}>JA</button>
+            </div>
+            <button className="btn btn-p" onClick={() => setWizard(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M12 5v14M5 12h14" /></svg>
+              {t("New filing", "新規届作成")}
             </button>
           </header>
 
           <div className="scroll">
-            {loading ? (
-              <div className="empty">{t("Loading…", "読み込み中…")}</div>
-            ) : view === "overview" ? (
-              <Overview goals={goals} />
-            ) : view === "goals" ? (
-              <GoalsView goals={goals} filter={filter} onFilterChange={setFilter} onOpenGoal={openGoal} />
+            {selected ? (
+              <NotificationDetail
+                key={`${selected.id}-${selected.status}-${selected.xmlGeneratedAt ?? ""}`}
+                notification={selected}
+                db={db}
+                user={user}
+                onBack={backToList}
+                onSave={handleSave}
+                onSendReview={handleSendReview}
+                onApprove={handleApprove}
+                onSubmit={handleSubmit}
+                onDelete={handleDelete}
+                onGenerateXml={(n) => setXmlFor(n)}
+              />
+            ) : view === "dashboard" ? (
+              <Dashboard db={db} onOpen={openNotif} onNavigate={(v) => setView(v)} />
+            ) : view === "notifications" ? (
+              <NotificationsView db={db} onOpen={openNotif} onCreate={() => setWizard(true)} />
+            ) : view === "series" ? (
+              <SeriesView db={db} onOpen={openNotif} onCreate={() => setWizard(true)} />
+            ) : view === "masters" ? (
+              <MasterView db={db} repo={repo} actorId={userId} reload={reload} flash={flash} />
             ) : (
-              <ReportView goals={goals} filter={filter} onFilterChange={setFilter} />
+              <AuditView db={db} />
             )}
           </div>
         </div>
       </div>
 
-      {editing && (
-        <GoalDrawer
-          goal={editing.goal}
-          isNew={editing.isNew}
-          goals={goals}
-          onClose={() => setEditing(null)}
-          onSave={handleSave}
-          onDelete={handleDelete}
-        />
-      )}
+      {wizard && <CreateWizard db={db} onClose={() => setWizard(false)} onSubmit={handleCreate} />}
+      {xmlFor && <XmlPreview notification={xmlFor} db={db} onClose={() => setXmlFor(null)} onGenerated={handleXmlGenerated} />}
 
-      <div className={`toast${toast ? " on" : ""}`}>
+      <div className={`toast${toast ? " on" : ""}${toast?.err ? " toast-err" : ""}`}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-          <path d="M20 6 9 17l-5-5" />
+          {toast?.err ? <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /> : <path d="M20 6 9 17l-5-5" />}
         </svg>
-        <span>{toast}</span>
+        <span>{toast?.msg}</span>
       </div>
     </LangContext.Provider>
   );
