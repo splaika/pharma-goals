@@ -1,185 +1,164 @@
-# Pharma Goals — Power Apps Code App
+# CTN Suite — 治験届管理システム（本番想定UIデモ）
 
-目標管理MVP（`pharma_goals_mvp_v3`）を **React + TypeScript + Vite** で移植し、
-**Power Apps Code App** として構成したものです。データ層を差し替え可能にしています。
+治験計画届等（CTN: Clinical Trial Notification）の作成・変更・提出を管理する、**本番を意識したUIデモ**です。
+**React + TypeScript + Vite** で構築し、**Power Apps Code App** として構成しています。
 
-- **モックモード（既定）** — メモリ内のシードデータで動作。Power Platform 不要で、
-  VS Code ですぐ起動します。**7/21のデモとUI開発はこれで完結**します。
-- **Dataverse モード** — 3つの Dataverse テーブルを、自動生成される型付きサービス経由で
-  読み書きします。認証・セキュリティロール・監査はプラットフォーム側が継承します
-  （トークン管理もバックエンドも不要）。
+> 本番は Microsoft Power Platform（**Dataverse ＋ モデル駆動アプリ ＋ プラグイン**）で構築する想定です。
+> このデモは Power Platform を使わず、**設計の中核ロジックとUXがローカルWebアプリで成立すること**を示します。
+> データ層は差し替え可能（モック ⇄ Dataverse）で、UIコードは変更不要です。
 
-切り替えは環境変数 `VITE_USE_DATAVERSE` の1つだけ。モード間で **UIコードの変更は不要**です。
-
----
-
-## 🔗 デモページ（動くデモをブラウザで開く）
-
-ビルド不要でそのまま触れる **1枚の自己完結HTML** のデモを [`demo/`](demo/) に同梱しています。
-
-- **公開デモURL（GitHub Pages）** — 👉 **https://splaika.github.io/pharma-goals/demo/**
-  <br>※ 初回のみ有効化が必要です。リポジトリの **Settings → Pages** で
-  Source = `Deploy from a branch`、Branch = `main` / `/(root)` を指定して Save すると、
-  上記URLで公開されます（反映に1〜2分）。
-- **すぐ確認したいとき（Pages不要）** — [htmlpreview で開く](https://htmlpreview.github.io/?https://raw.githubusercontent.com/splaika/pharma-goals/main/demo/index.html)
-- **ローカルで開く** — [`demo/index.html`](demo/index.html) をブラウザでダブルクリックするだけ
-
-> デモはブラウザ内のダミーデータで動作し、リロードで初期状態に戻ります。
-> セットアップや共有方法の詳細は [`demo/README.md`](demo/README.md) を参照してください。
+同梱の [`src/ctn/ctn-schema.json`](src/ctn/ctn-schema.json)（14テーブル・154列・16選択肢・サーバーロジック16件）を
+**単一ソース**とし、テーブル・列・選択肢・**動的必須切替**・「要確認」バッジをコードから直接読み込みます
+（手書きの重複定義は作りません）。設計の引き渡し内容は [`docs/CTN_ハンドオフ.md`](docs/CTN_ハンドオフ.md) を参照。
 
 ---
 
-## 1. モックデータでローカル起動（最短）
+## 🔗 動くデモ（ブラウザで開く）
+
+ビルド不要でそのまま触れます。**ブラウザ内のダミーデータで動作し、リロードで初期状態に戻ります**。
+
+- **GitHub Pages（自動デプロイ）** — 👉 **https://splaika.github.io/pharma-goals/**
+  <br>初回のみ、リポジトリの **Settings → Pages → Source = 「GitHub Actions」** を選択してください。以降は `main` および本ブランチへの push で自動ビルド・デプロイされます（[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)）。
+- **単一HTML（サーバー不要）** — [`demo/index.html`](demo/index.html) をブラウザで開くだけ。CSS・JSをすべてインラインした自己完結ファイルです（[htmlpreview で開く](https://htmlpreview.github.io/?https://raw.githubusercontent.com/splaika/pharma-goals/main/demo/index.html)）。`npm run build:demo` で再生成できます。
+
+---
+
+## 1. 起動（最短）
 
 ```bash
-npm install
+npm install        # ネイティブ依存(keytar)のビルドに失敗する場合は下記
+npm run dev        # Vite開発サーバー（モックデータ）→ 表示されたURLを開く
+```
+
+`@microsoft/power-apps` はネイティブ依存 `keytar` を含み、環境によってはビルドに失敗します。
+**その場合でもUI開発・デモは可能です**（SDKは Dataverse モードでのみ呼ばれます）。失敗する環境では:
+
+```bash
+npm install --ignore-scripts   # ネイティブビルドをスキップして依存を取得
 npm run dev
 ```
 
-表示されたローカルURLを開きます。シードデータで一通り動作し、リロードで初期状態に戻ります。
-
-> `npm install` で `@microsoft/power-apps` が入ります。ネイティブ依存のビルドに失敗する
-> 環境でも、UI開発は可能です（SDKはDataverseモードでのみ呼ばれます）。
-
-主なスクリプト:
+> デモはブラウザ内のダミーデータで動作し、**リロードで初期状態に戻ります**。
 
 | スクリプト | 用途 |
 | --- | --- |
 | `npm run dev` | Vite開発サーバー（モックデータ） |
 | `npm run build` | `tsc --noEmit && vite build` → `dist/` 出力 |
+| `npm run build:demo` | ビルド＋インライン化 → 自己完結の `demo/index.html` を生成 |
+| `npm test` | サーバー正本ロジックの自動テスト（Vitest・34件） |
 | `npm run typecheck` | 型チェックのみ |
-| `npm run preview` | 本番ビルドのプレビュー |
 
 ---
 
-## 2. 本物の Power Apps Code App にする
+## 2. 画面構成（左側メニュー）
 
-前提: Node.js（LTS）、Git、**Code Apps が有効な** Power Platform 環境
-（無料の Power Apps Developer Plan で十分）。
+| メニュー | 内容 |
+| --- | --- |
+| **ダッシュボード** | 既存の届出数・提出済・進行中・**アラート数**・**リマインダ数**・シリーズ数のKPI、アラート/リマインダ一覧、その下に**すべての治験届**をリストアップ |
+| **治験届一覧** | 全シリーズの治験届（計画/変更/中止/終了/開発中止）を種別・状態・シリーズ・検索で絞り込み |
+| **シリーズ（成分）** | 治験成分記号ごとのシリーズと届出の履歴（タイムライン）。順序番号の不変性を可視化 |
+| **マスタ管理** | 医療機関・医師・IRB・治験届出者・現場担当(CRC) の登録・追加・変更・**論理削除/復活** |
+| **監査ログ** | 誰が・いつ・どのレコードの・何を・どう変えたか（全操作を記録） |
 
-```bash
-# Power Apps クライアントライブラリ + npm CLI をインストール
-npm install -g @microsoft/power-apps
-
-# このプロジェクトを環境にCode Appとして登録
-power-apps init --display-name "Pharma Goals" --environment-id <あなたの環境ID>
-
-# 実環境に対してローカル実行（ターミナル2つ）:
-power-apps run      # ターミナル1 — 認証プロキシ + コネクタ経路
-npm run dev         # ターミナル2 — Vite（"Local Play" URLを、テナントと同じブラウザプロファイルで開く）
-
-# 公開
-npm run build
-power-apps push
-```
-
-`power-apps init` は `power.config.json`（アプリのマニフェスト）を生成します。ソース管理に含めてください。
+右上の **操作ユーザー** ドロップダウンで起票者/レビュー/承認者/薬事を切り替えられます（Entra ID認証の代替。**職務分離**のデモに使用）。EN/JA 切替も可能です。
 
 ---
 
-## 3. Dataverse に接続する
+## 3. 試せるシナリオ（ダミーデータ同梱）
 
-### 3a. テーブルを作成
+シードデータ：**5医療機関 ／ 12名の医師（責任・分担、うち4名は外字）／ 6名の現場担当(CRC等) ／ 4 IRB ／ 1 届出者 ／ 3シリーズ（ABC-123 / SRP-204 / KLM-330）／ 9件の治験届**。
 
-make.powerapps.com でソリューションとパブリッシャー（プレフィックス `sto`）を作成し、
-テーブルを3つ作ります。level と status はマッピングを簡潔にするため **テキスト列** にしています
-（後から選択肢列に昇格可能）。
+1. **新規届作成** — 「新規届作成」→ 新規シリーズ（成分記号を**即時検証**：半角英数・20桁以内・「&」不可）または既存シリーズ → 届出種別選択。届出種別で**必須項目・表示が切り替わり**（`requiredByType`/`requiredMatrix` 駆動）、主たる被験薬に順序番号 **#1** が採番、届出区分の**推奨=1** が理由つきで表示、提出期限バナーが**開始予定日−30日**を色分け表示。
+2. **変更届作成** — 直近の届から治験使用薬・施設・医師ロスターを**継承**（転記の排除）。医師ロスターを**足す/抜く**と、保存時にサーバーが**異動区分（追加=APPEND / 削除=DELETE）つきのイベント行**を自動生成。変更箇所の選択から**区分推奨**を算出。
+3. **N回作成** — 同一シリーズに計画→変更→変更…と重ねると、**届出回数・変更回数が自動採番**されます（SRP-204 は3件の届出を同梱）。
+4. **終了届** — 交付〜廃棄の数量列が**必須化**。治験使用薬の順序番号 **#1・#2 が計画届と一致**（突合キーの不変性）。
+5. **開発中止届** — 提出でシリーズの**開発状態が「開発中止」**へ更新（KLM-330）。
+6. **マスタの登録・追加・削除** — 各マスタをCRUD。**論理削除**（物理削除しない・履歴保持）と復活。医師登録時に**外字を検出**すると確認ダイアログ→**GaijiMapへ確認履歴を記録**（確認済みの医師には再表示しない）。
+7. **承認と提出（職務分離＋提出ゲート）** — 起票者は自分の届を承認できません（サーバーが拒否）。承認者に切り替えて承認 → **承認済でなければ提出不可**。
+8. **XML生成（確認ステップ）** — 主従区分・医師区分・異動区分で出力先/STATUSが分岐したXMLを生成し、**デモ用サブセットXSD**で機械検証・プレビュー・ダウンロード。**順序番号はこの確認ステップで初めて提示**されます。
 
-**テーブル: Goal**（論理名 `sto_goal`）
+---
 
-| 列（論理名） | 型 | 備考 |
-| --- | --- | --- |
-| `sto_name` | テキスト | 主列 → 英語タイトル |
-| `sto_titleja` | テキスト | 日本語タイトル |
-| `sto_level` | テキスト | `company` \| `dept` \| `team` \| `individual` |
-| `sto_department` | テキスト | 部門ID（`ds`, `co`, `ra`, `pv`, `co_co`） |
-| `sto_owner` | テキスト | 担当者名 / チーム名 |
-| `sto_avatar` | テキスト | アバターのイニシャル |
-| `sto_status` | テキスト | `g` \| `a` \| `r` |
-| `sto_parent` | 検索（→ **Goal**） | 自己参照。空=最上位 |
+## 4. サーバー正本ロジック（本番はDataverseプラグイン／数式列）
 
-**テーブル: Goal Update**（論理名 `sto_goalupdate`）— 月次進捗
+クライアント（PCF/ビジネスルール相当）は**提案・即時表示のみ**、**確定はサーバー側**という二層構造を再現しています。
+中核ロジックは**ホスト非依存の純粋関数**（[`src/ctn/logic.ts`](src/ctn/logic.ts) / [`src/ctn/xml.ts`](src/ctn/xml.ts)）に分離し、本番でプラグインへ載せ替え可能にしています。`npm test` で自動テスト（31件）を実行できます。
 
-| 列 | 型 | 備考 |
-| --- | --- | --- |
-| `sto_name` | テキスト | 主列 |
-| `sto_goal` | 検索（→ **Goal**） | 対象の目標 |
-| `sto_month` | テキスト | `YYYY-MM` |
-| `sto_percent` | 整数 | 0–100 |
-| `sto_commenten` | テキスト（複数行） | 英語コメント |
-| `sto_commentja` | テキスト（複数行） | 日本語コメント |
+| ロジック | 実装 |
+| --- | --- |
+| 30日調査対象の判定 / 提出期限の算定 | `is30DayReview` / `computeDeadline` |
+| 届出区分の推奨・確定（1＞2＞3） | `recommendKubun` |
+| 順序番号採番 **突合キー型**（薬・シリーズ内不変） | `nextStudyDrugSerial` |
+| 順序番号採番 **イベント行型**（医師・届内単位） | `nextInvestigatorSerial` |
+| 治験成分記号の検証 | `validateCompoundCode` |
+| 外字検出・正規化・記録 | `detectGaiji` / `normalizeGaiji` |
+| バイト数検証 | `checkByteLimit` |
+| 職務分離の強制 / 提出ゲート | `canApprove` / `canSubmit` |
+| 医師ロスター差分→イベント行 | `diffRoster` |
+| XML生成・XSD検証（分岐：主従/医師/異動区分） | `generateCtnXml` / `validateAgainstSubset` |
 
-**テーブル: Goal Change**（論理名 `sto_goalchange`）— 変更履歴
+> **「変更」の異動区分**は手引きとの突合が必要な**要確認事項**のため、デモでは**削除＋追加の2行に展開**する方針とし、コード内コメントに残しています。
 
-| 列 | 型 | 備考 |
-| --- | --- | --- |
-| `sto_name` | テキスト | 主列 |
-| `sto_goal` | 検索（→ **Goal**） | 対象の目標 |
-| `sto_changedat` | テキスト | 表示用タイムスタンプ |
-| `sto_who` | テキスト | イニシャル |
-| `sto_kind` | テキスト | `created` \| `updated` |
-| `sto_note` | テキスト（複数行） | 変更メモ |
+---
 
-> アプリ内の簡易履歴に加えてプラットフォームの監査証跡も残したい場合は、
-> Goal テーブルの **監査（Auditing）** を有効にしてください。
+## 5. プロジェクト構成
 
-### 3b. 型付きサービスを生成
-
-```bash
-pac code add-data-source -a dataverse -t sto_goal
-pac code add-data-source -a dataverse -t sto_goalupdate
-pac code add-data-source -a dataverse -t sto_goalchange
+```
+src/
+  App.tsx                     シェル（画面遷移・ユーザー切替・言語・トースト）
+  i18n.ts / PowerProvider.tsx 言語コンテキスト / Power Apps ホスト待ち（Dataverseモード）
+  index.css                   デザインシステム（navy/blue エンタープライズ）
+  ctn/
+    ctn-schema.json           単一ソース（14テーブル・154列・16選択肢・16ロジック）
+    schema.ts                 スキーマローダー（choices / requiredByType / 要確認 抽出）
+    types.ts                  ドメインモデル
+    refData.ts                choice値定数・利用者・外字マップ・日付ヘルパ
+    logic.ts / xml.ts         サーバー正本ロジック（純粋関数）＋ XML生成
+    derive.ts                 派生（アラート・リマインダ・集計）
+    logic.test.ts             自動テスト（Vitest）
+    data/
+      repository.ts           CtnRepository インターフェース + mock/dataverse 切替
+      mockRepository.ts       メモリ内実装（採番・職務分離・提出ゲート・監査を強制）
+      dataverseRepository.ts  Dataverse実装の雛形（pac codegen まではプレースホルダ）
+      seed.ts                 ダミーデータ（5施設・12医師・6CRC・3シリーズ・9届）
+    components/               Sidebar / Dashboard / NotificationList / NotificationDetail
+                             / CreateWizard / MasterView / GaijiDialog / XmlPreview
+                             / SeriesView / AuditView / common
 ```
 
-これで `src/generated/…` に実ファイルが生成され、同梱の **プレースホルダを置き換え**ます。
-生成されたサービス/モデルの識別子（例: `GoalsService` / `Goals`）が
-`src/data/dataverseRepository.ts` の import と一致するか確認してください。テーブルの複数形
-表示名が異なる場合は import 名を調整します — 修正が必要なのはこの1ファイルだけです。
+**データの流れ:** コンポーネント → `CtnRepository` →（Mock | Dataverse）。切替は環境変数 `VITE_USE_DATAVERSE` の1つだけ。
 
-### 3c. 切り替える
+---
+
+## 6. Dataverse に接続する（本番への差し替え）
+
+本番は Power Platform。`pac code add-data-source -a dataverse -t cr_notification`（他13テーブル）で型付きサービスを生成し、
+[`dataverseRepository.ts`](src/ctn/data/dataverseRepository.ts) の各メソッドを Dataverse 読み書きに置き換えます。
+採番・区分・職務分離・提出ゲート・外字・XML生成は**サーバー側プラグイン**へ載せ替えます（`logic.ts` はライブラリとして再利用可能）。
 
 ```bash
-cp .env.example .env.local   # その後 VITE_USE_DATAVERSE=true に設定
+cp .env.example .env.local     # VITE_USE_DATAVERSE=true に設定
 npm run dev
 ```
 
 ---
 
-## 4. プロジェクト構成
-
-```
-src/
-  main.tsx                 アプリのブートストラップ
-  PowerProvider.tsx        Power Apps ホストのコンテキスト待ち（Dataverseモード）
-  App.tsx                  状態・画面遷移・言語・保存/削除の統括
-  types.ts                 ドメインモデル（Goal / MonthlyEntry / ChangeEntry）
-  refData.ts               部門・月・ヘルパ（進捗・絞り込みなど）
-  i18n.ts                  EN/JA 言語コンテキスト + t()
-  index.css                スタイル（v3モックから移植）
-  data/
-    repository.ts          GoalsRepository インターフェース + mock/dataverse 切替
-    mockRepository.ts       メモリ内実装（シード）
-    seed.ts                 デモデータ
-    dataverseRepository.ts  Dataverse実装（行 <-> ドメインのマッピング）
-  generated/               ⚠️ `pac code add-data-source` 実行までプレースホルダ
-  components/
-    Sidebar / Filters / Overview / GoalsView / GoalDrawer / ReportView
-```
-
-**データの流れ:** コンポーネント → `GoalsRepository` →（Mock | Dataverse）。
-書き込みは粒度を分けています（`updateGoal` / `upsertMonthly` / `addChange`）ので、
-Dataverse でも対象の行だけを正確に更新します。
-
----
-
 ## 注意・制限事項
 
-- **検索（ルックアップ）列** は `@odata.bind` 構文で設定します（`dataverseRepository.ts` 参照）。
-  既存目標の親を「なし」に戻す操作は今後の対応としています（Code Apps はまだ関連解除の
-  専用ヘルパを公開していないため）。
-- **フォント** は Google Fonts から読み込みます。Power Apps は CSP を強制します（2026年1月以降）。
-  環境のCSP設定で `fonts.googleapis.com` / `fonts.gstatic.com` を許可するか、
-  `index.css` でシステムフォントに切り替えてください。
-- **React 18** — Power Apps SDK は React 18 対象です。19 には上げないでください。
-- 権限制御は本MVPの対象外です（全員が全件閲覧）。Dataverseモードでは行の可視性は
-  割り当てたセキュリティロールに従います。
+- **デモ用サブセットXSD** — XML検証は公式XSD（`iykckn_all_v3_0_0.xsd`）ではなく、要素定義から起こした**デモ用サブセット**です（[`xml.ts`](src/ctn/xml.ts)）。公式XSD提供時に差し替えられるよう分離しています。
+- **「要確認」19件** — 設計上の未確定箇所（本番は手引き2024年3月版との突合が必要）。UIに **⚠要確認** バッジを表示します。一覧は下記。
+- デモで示さないもの：Entra ID認証（ユーザー切替で模擬）／電子署名（記録のみ）／SharePoint（擬似パス）／PMDAゲートウェイ連携／監査の改ざん防止性。
+- **React 18** — Power Apps SDK は React 18 対象です（19 には上げないでください）。フォントは Google Fonts から読み込みます（Power Apps の CSP 設定で許可、またはシステムフォントへ切替）。
+
+### 「要確認」19件
+
+| テーブル | 列 |
+| --- | --- |
+| 治験届 | 届出年月日 / 30日調査対応被験薬区分 / 治験開始予定日 / 有償の理由等 / 脚注 |
+| 治験使用薬 | 記号・名称等の種類 / 区別（被験薬/対照薬等）/ 国内における承認状況 / 副作用報告の有無 / 製造所名称 / 薬効分類番号 / 用法及び用量 / 剤形コード |
+| 実施医療機関 | その他 |
+| 治験責任医師・分担医師 | 異動区分 |
+| 施設別治験薬数量 | 数量（届出用表記） |
+| 治験届出者 | 海外依頼者・外国製造業者情報 |
+| 医療機関マスタ | 機関名称 |
+| 外字置換マッピング | 代替字 |
