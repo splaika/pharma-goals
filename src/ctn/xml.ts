@@ -79,6 +79,10 @@ export function generateCtnXml(n: Notification, ctx: XmlContext): string {
   // 開発中止届は届出回数不要（"00"）。それ以外は対象プロトコールの届出回数。
   x.leaf("FILINGCOUNT", n.notifType === "devDiscontinuation" ? "00" : n.filingCount);
   if (n.changeCount != null) x.leaf("CHANGECOUNT", n.changeCount);
+  if (n.notifType === "change") {
+    if (n.changeDate) x.leaf("CHANGEDATE", n.changeDate);
+    if (n.changeReason) x.leaf("CHANGEREASON", n.changeReason);
+  }
   if (n.receptNo) x.leaf("RECEPTNO", n.receptNo);
   x.leaf("NOTEDATE", n.noteDate ?? "");
   x.leaf("KUBUN", n.kubun ?? "");

@@ -33,22 +33,23 @@ export function is30DayReview(n: Pick<Notification, "notifType" | "filingCount" 
 //   中止/終了/開発中止は対象外
 // ---------------------------------------------------------------------------
 export function computeDeadline(
-  n: Pick<Notification, "notifType" | "filingCount" | "kubun" | "plannedStartDate" | "changeLocations">
+  n: Pick<Notification, "notifType" | "filingCount" | "kubun" | "plannedStartDate" | "changeLocations" | "changeDate">
 ): string | undefined {
-  if (!n.plannedStartDate) return undefined;
   const r = getRules(); // 設定画面のオフセット（既定 30 / 14）
   if (n.notifType === "plan") {
+    if (!n.plannedStartDate) return undefined;
     // 初回計画届＝30日調査（開始予定日−30日）／N回届（新規プロトコール）＝−14日
     return addDays(n.plannedStartDate, is30DayReview(n) ? -r.offset30 : -r.offset14);
   }
   if (n.notifType === "change") {
-    // 変更届は「提出時期」4区分で算定（手引き p.86-89）。
-    // plannedStartDate を「変更（予定）日」の代理として使用（本デモの簡略化・要確認）。
+    // 変更届は「提出時期」4区分で算定（手引き p.86-89）。起点は「変更年月日（変更予定日）」。
+    const ref = n.changeDate || n.plannedStartDate;
+    if (!ref) return undefined;
     const timing = changeTiming(n.changeLocations ?? []);
     if (!timing) return undefined;
-    if (timing === "before") return n.plannedStartDate; // 変更前：変更（予定）日まで
-    if (timing === "m6") return addDays(n.plannedStartDate, 182); // 変更後6ヶ月以内
-    if (timing === "y1") return addDays(n.plannedStartDate, 365); // 変更後1年以内
+    if (timing === "before") return ref; // 変更前：変更（予定）日まで
+    if (timing === "m6") return addDays(ref, 182); // 変更後6ヶ月以内
+    if (timing === "y1") return addDays(ref, 365); // 変更後1年以内
     return undefined; // 終了・中止時：固定期限なし
   }
   return undefined;

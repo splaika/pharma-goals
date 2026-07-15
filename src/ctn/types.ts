@@ -249,6 +249,8 @@ export interface Notification {
   plannedStartDate?: string; // 治験開始予定日
   status: StatusKey;
   changeLocations: number[]; // 変更箇所（複数選択・変更届）
+  changeDate?: string; // 変更年月日（変更届・提出時期の起点＝変更予定日）
+  changeReason?: string; // 変更理由（変更届）
   terminationDate?: string; // 中止年月日
   terminationReason?: string;
   postTermination?: string; // その後の対応状況（中止届）

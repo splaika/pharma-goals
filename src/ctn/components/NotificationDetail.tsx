@@ -368,6 +368,13 @@ export function NotificationDetail({
           </Field>
         )}
 
+        {draft.notifType === "change" && (
+          <div className="form-grid">
+            <Field label={t("Change date", "変更年月日")} mark="always" hint={t("Reference date for submission timing", "提出時期の起点（変更予定日）")}><input type="date" className="tin" value={draft.changeDate ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.changeDate = e.target.value))} /></Field>
+            <Field label={t("Reason for change", "変更理由")} mark="always" wide><textarea className="ta" value={draft.changeReason ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.changeReason = e.target.value))} /></Field>
+          </div>
+        )}
+
         {(draft.notifType === "termination" || draft.notifType === "devDiscontinuation") && (
           <div className="form-grid">
             <Field label={t("Termination date", "中止年月日")} mark="always"><input type="date" className="tin" value={draft.terminationDate ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.terminationDate = e.target.value))} /></Field>
