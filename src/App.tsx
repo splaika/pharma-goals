@@ -37,9 +37,10 @@ export default function App() {
   const [xmlFor, setXmlFor] = useState<Notification | null>(null);
   const [toast, setToast] = useState<{ msg: string; err?: boolean } | null>(null);
   const [rules, setRulesState] = useState<RuleSettings>(() => ({ ...DEFAULT_RULES }));
-  const [theme, setTheme] = useState<"enterprise" | "modern">(() => {
+  const [theme, setTheme] = useState<"enterprise" | "modern" | "soft">(() => {
     try {
-      return localStorage.getItem("ctn.theme") === "modern" ? "modern" : "enterprise";
+      const v = localStorage.getItem("ctn.theme");
+      return v === "modern" || v === "soft" ? v : "enterprise";
     } catch {
       return "enterprise";
     }
@@ -207,6 +208,7 @@ export default function App() {
             <div className="lang theme-switch" title={t("Design theme", "デザインテーマ")}>
               <button className={theme === "enterprise" ? "on" : ""} onClick={() => setTheme("enterprise")}>{t("Classic", "標準")}</button>
               <button className={theme === "modern" ? "on" : ""} onClick={() => setTheme("modern")}>{t("Modern", "モダン")}</button>
+              <button className={theme === "soft" ? "on" : ""} onClick={() => setTheme("soft")}>{t("Soft", "ソフト")}</button>
             </div>
             <button
               className="icon-btn mode-toggle"
