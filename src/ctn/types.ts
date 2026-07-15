@@ -263,6 +263,24 @@ export interface Notification {
   periodEnd?: string; // 実施期間（終了）
   isGlobal: boolean; // 国際共同治験
   reasonOnerous?: string; // 有償の理由等
+  // ---- 治験計画概要：手引き第4版 4.3 の条件付き項目（該当時のみ・計画で記入/変更等で継承） ----
+  chargeOutPersonName?: string; // 費用負担者氏名（CHARGEOUTPERSONNAME）
+  validityReasons?: string; // 費用負担の妥当性の理由（VALIDITYREASONS）
+  applicBiological?: number; // 生物由来製品 該当有無（TYPEBIOLOGICALPROD/APPLICABLEORNOT）
+  applicBiologicalDetail?: string; // 生物由来製品 詳細（DETAIL）
+  applicCartagena?: number; // カルタヘナ法 該当有無（TYPECLINTRIALWITHDRUGCARTAGENA）
+  applicCartagenaDetail?: string;
+  applicExpandedAccess?: number; // 拡大治験 該当有無（TYPEEXPANDEDACCESSPROG）
+  applicExpandedAccessDetail?: string;
+  otherCommentsPrimary?: string; // その他コメント・主たる被験薬（OTHERCOMMENTS_PRIMARY）
+  otherCommentsProtocol?: string; // その他コメント・治験計画書（OTHERCOMMENTS_PROTOCOL）
+  croName?: string; // CRO 名称（CRO_NAME・繰り返し可＝要確認）
+  croAddress1?: string; // CRO 所在地1（CRO_ADDRESS1）
+  croAddress2?: string; // CRO 所在地2（CRO_ADDRESS2）
+  croService?: string; // CRO 受託業務の範囲（CRO_SERVICE）
+  coordName?: string; // 治験調整医師 氏名（KEYINVEST_NAME・繰り返し可＝要確認）
+  coordAffiliation?: string; // 治験調整医師 所属（KEYINVEST_AFFILIATION）
+  coordInstitution?: string; // 治験調整医師 医療機関名（NAMEMEDICALINSTITUT）
   remarks?: string; // 備考（通信欄）
   footnote?: string; // 脚注
   gwReceptNo?: string; // GW受付番号

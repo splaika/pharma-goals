@@ -105,6 +105,13 @@ export const ATTACH_STATUS = { attached: 100001300, checking: 100001301, optiona
 export const COMB = { subject: 100001100, control: 100001101, concomitant: 100001102, rescue: 100001103, other: 100001104 } as const;
 export const COMB_PLACEHOLDER = COMB.control; // プラセボ＝対照薬
 
+// 該当有無（APPLICABLEORNOT）— 生物由来製品/カルタヘナ/拡大治験 等の該当区分。
+// 手引きのコード値は要確認のため暫定（1=該当 / 0=非該当）。
+export const APPLICABILITY_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "該当" },
+  { value: 0, label: "非該当" },
+];
+
 // 30日調査対応被験薬区分（cr_subj30dayreview）— コード表・「要確認」。
 // 手引き未確定のため、届出区分（SET.kubun）とは切り離した当項目専用の暫定値を定義する。
 export const SUBJ30_OPTIONS: { value: number; label: string }[] = [

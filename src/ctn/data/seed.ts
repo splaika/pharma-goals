@@ -167,6 +167,10 @@ export const NOTIFICATIONS: Notification[] = [
     objectives: "関節リウマチ患者を対象としたABC-123の有効性及び安全性の検討（プラセボ対照無作為化二重盲検比較試験）",
     plannedSubjDrug: 120, plannedSubjTotal: 240, targetDisease: "関節リウマチ",
     periodStart: "2026-05", periodEnd: "2028-03", isGlobal: false, sponsorId: "sp-1",
+    applicBiological: 0, applicCartagena: 0, applicExpandedAccess: 0,
+    otherCommentsProtocol: "実施計画書第2.0版（2026-03-10）に基づく。",
+    croName: "株式会社シーアールオー・ジャパン", croAddress1: "東京都中央区日本橋1-1-1",
+    croService: "モニタリング、データマネジメント、統計解析",
     remarks: "", footnote: "",
     studyDrugs: [abcMain(), abcPlacebo()],
     sites: [

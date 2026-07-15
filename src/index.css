@@ -330,6 +330,7 @@
 
 /* forms */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.form-sub{grid-column:1/-1;margin:18px 0 2px;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-3);border-top:1px solid var(--line-2);padding-top:12px}
 @media(max-width:760px){.form-grid{grid-template-columns:1fr}}
 .field{display:flex;flex-direction:column;gap:6px}
 .field-wide{grid-column:1/-1}

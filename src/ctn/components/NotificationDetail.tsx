@@ -17,6 +17,7 @@ import {
   ATTACH_STATUS,
   COMB,
   SUBJ30_OPTIONS,
+  APPLICABILITY_OPTIONS,
   daysUntil,
   fmtDate,
   label,
@@ -404,6 +405,41 @@ export function NotificationDetail({
           {show("cr_objectives") && <Field label={t("Objectives", "目的")} mark={mk("cr_objectives")} wide><textarea className="ta" value={draft.objectives} disabled={!editable} onChange={(e) => set((n) => (n.objectives = e.target.value))} /></Field>}
           {show("cr_targetdisease") && <Field label={t("Target disease (main drug)", "主たる被験薬の対象疾患")} mark={mk("cr_targetdisease")} wide><input className="tin" value={draft.targetDisease} disabled={!editable} onChange={(e) => set((n) => (n.targetDisease = e.target.value))} /></Field>}
           {show("cr_reasononerous") && <Field label={t("Reason for onerous trial", "有償の理由等")} mark={mk("cr_reasononerous")} unconfirmed wide><textarea className="ta" value={draft.reasonOnerous ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.reasonOnerous = e.target.value))} placeholder={t("Only for onerous (paid) trials", "有償治験の場合のみ")} /></Field>}
+
+          {/* ===== 手引き4.3 条件付き項目（該当時のみ） ===== */}
+          <div className="form-sub">{t("Conditional items (Guide §4.3 — only when applicable)", "条件付き項目（手引き4.3・該当時のみ）")}</div>
+          <div className="form-grid">
+            {show("cr_biological") && <Field label={t("Biological product", "生物由来製品 該当有無")} mark={mk("cr_biological")} unconfirmed><select className="sel" value={draft.applicBiological ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.applicBiological = e.target.value === "" ? undefined : Number(e.target.value)))}><option value="">—</option>{APPLICABILITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>}
+            {show("cr_cartagena") && <Field label={t("Cartagena Act", "カルタヘナ法 該当有無")} mark={mk("cr_cartagena")} unconfirmed><select className="sel" value={draft.applicCartagena ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.applicCartagena = e.target.value === "" ? undefined : Number(e.target.value)))}><option value="">—</option>{APPLICABILITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>}
+            {show("cr_expandedaccess") && <Field label={t("Expanded access", "拡大治験 該当有無")} mark={mk("cr_expandedaccess")} unconfirmed><select className="sel" value={draft.applicExpandedAccess ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.applicExpandedAccess = e.target.value === "" ? undefined : Number(e.target.value)))}><option value="">—</option>{APPLICABILITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>}
+          </div>
+          {draft.applicBiological === 1 && <Field label={t("Biological — detail", "生物由来製品 詳細")} mark={mk("cr_biologicaldetail")} wide><textarea className="ta" value={draft.applicBiologicalDetail ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.applicBiologicalDetail = e.target.value))} /></Field>}
+          {draft.applicCartagena === 1 && <Field label={t("Cartagena — detail", "カルタヘナ法 詳細")} mark={mk("cr_cartagenadetail")} wide><textarea className="ta" value={draft.applicCartagenaDetail ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.applicCartagenaDetail = e.target.value))} /></Field>}
+          {draft.applicExpandedAccess === 1 && <Field label={t("Expanded access — detail", "拡大治験 詳細")} mark={mk("cr_expandedaccessdetail")} wide><textarea className="ta" value={draft.applicExpandedAccessDetail ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.applicExpandedAccessDetail = e.target.value))} /></Field>}
+          <div className="form-grid">
+            {show("cr_chargeoutperson") && <Field label={t("Cost bearer", "費用負担者氏名")} mark={mk("cr_chargeoutperson")}><input className="tin" value={draft.chargeOutPersonName ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.chargeOutPersonName = e.target.value))} placeholder={t("Only when applicable", "該当する場合のみ")} /></Field>}
+          </div>
+          {show("cr_validityreasons") && <Field label={t("Validity reasons (cost)", "費用負担の妥当性の理由")} mark={mk("cr_validityreasons")} wide><textarea className="ta" value={draft.validityReasons ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.validityReasons = e.target.value))} /></Field>}
+          {show("cr_othercommentsprimary") && <Field label={t("Other comments (main drug)", "その他コメント（主たる被験薬）")} mark={mk("cr_othercommentsprimary")} wide><textarea className="ta" value={draft.otherCommentsPrimary ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.otherCommentsPrimary = e.target.value))} /></Field>}
+          {show("cr_othercommentsprotocol") && <Field label={t("Other comments (protocol)", "その他コメント（治験計画書）")} mark={mk("cr_othercommentsprotocol")} wide><textarea className="ta" value={draft.otherCommentsProtocol ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.otherCommentsProtocol = e.target.value))} /></Field>}
+
+          {/* ===== CRO（開発業務受託機関）・要確認：繰り返しは単数入力で代表 ===== */}
+          <div className="form-sub">{t("CRO (contract research org.) — single entry in this demo", "開発業務受託機関（CRO）・本デモは単数入力")}</div>
+          <div className="form-grid">
+            {show("cr_croname") && <Field label={t("CRO name", "CRO 名称")} mark={mk("cr_croname")} unconfirmed><input className="tin" value={draft.croName ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.croName = e.target.value))} /></Field>}
+            {show("cr_croaddress1") && <Field label={t("CRO address 1", "CRO 所在地1")} mark={mk("cr_croaddress1")} unconfirmed><input className="tin" value={draft.croAddress1 ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.croAddress1 = e.target.value))} /></Field>}
+            {show("cr_croaddress2") && <Field label={t("CRO address 2", "CRO 所在地2")} mark={mk("cr_croaddress2")} unconfirmed><input className="tin" value={draft.croAddress2 ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.croAddress2 = e.target.value))} /></Field>}
+          </div>
+          {show("cr_croservice") && <Field label={t("CRO scope of work", "CRO 受託業務の範囲")} mark={mk("cr_croservice")} unconfirmed wide><textarea className="ta" value={draft.croService ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.croService = e.target.value))} /></Field>}
+
+          {/* ===== 治験調整医師・調整委員会・要確認：繰り返しは単数入力で代表 ===== */}
+          <div className="form-sub">{t("Coordinating investigator / committee — single entry in this demo", "治験調整医師・調整委員会・本デモは単数入力")}</div>
+          <div className="form-grid">
+            {show("cr_coordname") && <Field label={t("Coordinating investigator", "治験調整医師 氏名")} mark={mk("cr_coordname")} unconfirmed><input className="tin" value={draft.coordName ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.coordName = e.target.value))} /></Field>}
+            {show("cr_coordaffiliation") && <Field label={t("Affiliation", "所属")} mark={mk("cr_coordaffiliation")} unconfirmed><input className="tin" value={draft.coordAffiliation ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.coordAffiliation = e.target.value))} /></Field>}
+            {show("cr_coordinstitution") && <Field label={t("Medical institution", "医療機関名")} mark={mk("cr_coordinstitution")} unconfirmed><input className="tin" value={draft.coordInstitution ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.coordInstitution = e.target.value))} /></Field>}
+          </div>
+
           <div className="form-grid">
             <Field label={t("GW receipt no.", "GW受付番号")} mark={mk("cr_gwreceptno")} hint={t("Entered after PMDA gateway acceptance", "提出後にPMDA受付完了メールから入力")}><input className="tin" value={draft.gwReceptNo ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.gwReceptNo = e.target.value))} /></Field>
           </div>

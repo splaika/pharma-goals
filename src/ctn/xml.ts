@@ -85,6 +85,36 @@ export function generateCtnXml(n: Notification, ctx: XmlContext): string {
   x.leaf("OBJECTIVES", n.objectives);
   x.leaf("TARGETDISEASE", n.targetDisease);
 
+  // ---- 手引き4.3 条件付き項目（該当時のみ出力） ----
+  // 該当区分は ATTR_UPDATE_TYPE のリーフ値（コンテナではない）。DETAIL/APPLICABLEORNOT の
+  // 親子関係は手引き突合が必要（要確認）のため、本サブセットでは該当有無を値として出力する。
+  if (n.applicBiological != null) x.leaf("TYPEBIOLOGICALPROD", n.applicBiological);
+  if (n.applicCartagena != null) x.leaf("TYPECLINTRIALWITHDRUGCARTAGENA", n.applicCartagena);
+  if (n.applicExpandedAccess != null) x.leaf("TYPEEXPANDEDACCESSPROG", n.applicExpandedAccess);
+  if (n.chargeOutPersonName) {
+    x.open("CHARGEOUTPERSONCLINTRIAL", { SERIALNO1: 1, STATUS: "ADD" });
+    x.leaf("CHARGEOUTPERSONNAME", n.chargeOutPersonName);
+    if (n.validityReasons) x.leaf("VALIDITYREASONS", n.validityReasons);
+    x.close("CHARGEOUTPERSONCLINTRIAL");
+  }
+  if (n.otherCommentsPrimary) x.leaf("OTHERCOMMENTS_PRIMARY", n.otherCommentsPrimary);
+  if (n.otherCommentsProtocol) x.leaf("OTHERCOMMENTS_PROTOCOL", n.otherCommentsProtocol);
+  if (n.croName) {
+    x.open("INFOCRO", { SERIALNO1: 1, STATUS: "ADD" });
+    x.leaf("CRO_NAME", n.croName);
+    if (n.croAddress1) x.leaf("CRO_ADDRESS1", n.croAddress1);
+    if (n.croAddress2) x.leaf("CRO_ADDRESS2", n.croAddress2);
+    if (n.croService) x.leaf("CRO_SERVICE", n.croService);
+    x.close("INFOCRO");
+  }
+  if (n.coordName) {
+    x.open("INFOCOORDINVESTIGATOR", { SERIALNO1: 1, STATUS: "ADD" });
+    x.leaf("KEYINVEST_NAME", n.coordName);
+    if (n.coordAffiliation) x.leaf("KEYINVEST_AFFILIATION", n.coordAffiliation);
+    if (n.coordInstitution) x.leaf("NAMEMEDICALINSTITUT", n.coordInstitution);
+    x.close("INFOCOORDINVESTIGATOR");
+  }
+
   // ---- 治験届出者（INFOPERSONFILLNOTE / SERIALNO1・ADD型） ----
   x.open("INFOPERSONFILLNOTE", { SERIALNO1: 1, STATUS: "ADD" });
   x.leaf("SPONSORNAME", ctx.sponsor.name);
