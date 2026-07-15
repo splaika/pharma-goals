@@ -37,6 +37,13 @@ export default function App() {
   const [xmlFor, setXmlFor] = useState<Notification | null>(null);
   const [toast, setToast] = useState<{ msg: string; err?: boolean } | null>(null);
   const [rules, setRulesState] = useState<RuleSettings>(() => ({ ...DEFAULT_RULES }));
+  const [theme, setTheme] = useState<"enterprise" | "modern">(() => {
+    try {
+      return localStorage.getItem("ctn.theme") === "modern" ? "modern" : "enterprise";
+    } catch {
+      return "enterprise";
+    }
+  });
 
   const t = useMemo(() => makeT(lang), [lang]);
   const repo = getRepository();
@@ -45,6 +52,13 @@ export default function App() {
   useEffect(() => {
     document.body.classList.toggle("ja", lang === "ja");
   }, [lang]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("ctn.theme", theme);
+    } catch {
+      /* ignore */
+    }
+  }, [theme]);
 
   const reload = async () => setDb(await repo.getState());
   useEffect(() => {
@@ -149,8 +163,8 @@ export default function App() {
 
   return (
     <LangContext.Provider value={{ lang, setLang: (l) => setLang(l as Lang), t }}>
-      <div className={`app${lang === "ja" ? " ja" : ""}`}>
-        <Sidebar view={view} onNavigate={(v) => { setSelectedId(null); setView(v); }} user={user} badges={{ dashboard: alerts.length }} />
+      <div className={`app${lang === "ja" ? " ja" : ""} theme-${theme}`}>
+        <Sidebar view={selected ? "notifications" : view} onNavigate={(v) => { setSelectedId(null); setView(v); }} user={user} badges={{ dashboard: alerts.length }} />
         <div className="main">
           <header className="top">
             <h1>{selected ? t("Filing detail", "治験届 詳細") : t(...TITLES[view])}</h1>
@@ -161,6 +175,10 @@ export default function App() {
               <select className="sel" value={userId} onChange={(e) => setUserId(e.target.value)}>
                 {USERS.map((u) => <option key={u.id} value={u.id}>{u.name}（{t(roleLabel[u.role][0], roleLabel[u.role][1])}）</option>)}
               </select>
+            </div>
+            <div className="lang theme-switch" title={t("Design theme", "デザインテーマ")}>
+              <button className={theme === "enterprise" ? "on" : ""} onClick={() => setTheme("enterprise")}>{t("Classic", "標準")}</button>
+              <button className={theme === "modern" ? "on" : ""} onClick={() => setTheme("modern")}>{t("Modern", "モダン")}</button>
             </div>
             <div className="lang">
               <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
@@ -196,7 +214,7 @@ export default function App() {
             ) : view === "masters" ? (
               <MasterView db={db} repo={repo} actorId={userId} reload={reload} flash={flash} />
             ) : view === "settings" ? (
-              <SettingsView rules={rules} onSave={applyRules} />
+              <SettingsView rules={rules} onSave={applyRules} user={user} />
             ) : (
               <AuditView db={db} />
             )}

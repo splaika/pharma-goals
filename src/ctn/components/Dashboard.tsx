@@ -30,11 +30,6 @@ export function Dashboard({ db, onOpen, onNavigate }: { db: CtnDb; onOpen: (id: 
 
   return (
     <>
-      <div className="vh">
-        <div className="t">{t("Dashboard", "ダッシュボード")}</div>
-        <div className="s">{t("CTN filings, alerts and reminders at a glance.", "既存の治験届・アラート・リマインダをひと目で。")}</div>
-      </div>
-
       <div className="kpis kpis-5">
         <Kpi label={t("Total filings", "届出総数")} value={stats.total} onClick={() => onNavigate("notifications")} />
         <Kpi label={t("Submitted", "提出済み")} value={stats.submitted} />
@@ -44,7 +39,7 @@ export function Dashboard({ db, onOpen, onNavigate }: { db: CtnDb; onOpen: (id: 
       </div>
 
       <div className="dash-grid">
-        <div className="sect">
+        <div className="sect sect-alert">
           <div className="sect-h">
             <div><h3>⚠ {t("Alerts", "アラート")}</h3><div className="sect-sub">{t("Submission deadlines", "提出期限に関する警告")}</div></div>
             <span className="count-chip red">{alertItems.length}</span>
@@ -53,7 +48,7 @@ export function Dashboard({ db, onOpen, onNavigate }: { db: CtnDb; onOpen: (id: 
             {alertItems.length === 0 ? <div className="empty small">{t("No alerts.", "アラートはありません。")}</div> : alertItems.map((a) => <AlertRow key={a.id} a={a} onOpen={onOpen} />)}
           </div>
         </div>
-        <div className="sect">
+        <div className="sect sect-reminder">
           <div className="sect-h">
             <div><h3>🔔 {t("Reminders", "リマインダ")}</h3><div className="sect-sub">{t("Pending actions", "対応待ちのタスク")}</div></div>
             <span className="count-chip amber">{reminderItems.length}</span>

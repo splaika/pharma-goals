@@ -129,11 +129,6 @@ export function NotificationsView({ db, onOpen }: { db: CtnDb; onOpen: (id: stri
 
   return (
     <>
-      <div className="vh">
-        <div className="t">{t("Clinical Trial Notifications", "治験届一覧")}</div>
-        <div className="s">{t("All CTN filings across every series.", "全シリーズの治験届（計画・変更・中止・終了・開発中止）。")}</div>
-      </div>
-
       <div className="filters">
         <div className="fg">
           <label>{t("Type", "届出種別")}</label>

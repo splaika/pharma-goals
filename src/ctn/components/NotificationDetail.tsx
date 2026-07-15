@@ -57,6 +57,7 @@ export function NotificationDetail({
   const { t, lang } = useLang();
   const [draft, setDraft] = useState<Notification>(() => structuredClone(notification));
   const [dirty, setDirty] = useState(false);
+  const [tab, setTab] = useState<string>("basic");
   const compound = db.compounds.find((c) => c.id === draft.compoundId)!;
   const editable = draft.status === "draft" || draft.status === "review";
 
@@ -230,6 +231,18 @@ export function NotificationDetail({
   const activeSponsors = db.sponsors.filter((s) => s.active);
   const sponsor = db.sponsors.find((s) => s.id === draft.sponsorId);
 
+  // 詳細画面のセクションをかたまり（タブ）に分けて横並びのボタンで切替
+  const isDevDisc = draft.notifType === "devDiscontinuation";
+  const detailTabs: { key: string; label: [string, string]; show: boolean }[] = [
+    { key: "basic", label: ["Basics", "基本情報"], show: true },
+    { key: "plan", label: ["Plan summary", "治験計画概要"], show: !isDevDisc },
+    { key: "drugs", label: ["Study drugs", "治験使用薬"], show: !isDevDisc },
+    { key: "sites", label: ["Institutions", "実施医療機関"], show: !isDevDisc },
+    { key: "refs", label: ["Refs / attachments", "参照・添付・照会"], show: !isDevDisc || draft.inquiries.length > 0 },
+  ];
+  const visibleTabs = detailTabs.filter((tb) => tb.show);
+  const activeTab = visibleTabs.some((tb) => tb.key === tab) ? tab : visibleTabs[0].key;
+
   return (
     <div className="detail">
       {/* ===== ヘッダー ===== */}
@@ -282,7 +295,17 @@ export function NotificationDetail({
         </div>
       )}
 
-      {/* ===== 基本情報 ===== */}
+      {/* ===== セクションタブ（横並びショートカット） ===== */}
+      <div className="detail-tabs">
+        {visibleTabs.map((tb) => (
+          <button key={tb.key} type="button" className={`dtab${activeTab === tb.key ? " on" : ""}`} onClick={() => setTab(tb.key)}>
+            {t(tb.label[0], tb.label[1])}
+          </button>
+        ))}
+      </div>
+
+      {/* ===== 基本情報タブ（基本情報 + 治験届出者 + 備考） ===== */}
+      {activeTab === "basic" && (<>
       <Section title={t("Basic information", "基本情報")} sub={t("Common items — inherited from the series where possible", "共通事項（可能な限りシリーズから継承）")}>
         <div className="form-grid">
           <Field label={t("Notification type", "届出種別")} mark="always"><input className="tin" value={notifTypeName(draft.notifType, lang)} disabled /></Field>
@@ -356,8 +379,16 @@ export function NotificationDetail({
         </div>
       </Section>
 
-      {/* ===== 治験計画概要 ===== */}
-      {draft.notifType !== "devDiscontinuation" && (
+      {/* 備考（基本情報タブ内。開発中止届では必須◎） */}
+      {show("cr_remarks") && (
+        <Section title={t("Remarks", "備考")}>
+          <Field label={t("Remarks", "備考（通信欄）")} mark={mk("cr_remarks")} wide><textarea className="ta" value={draft.remarks ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.remarks = e.target.value))} placeholder={draft.notifType === "devDiscontinuation" ? "開発中止届では実質必須（中止の経緯・以降の対応等）" : ""} /></Field>
+        </Section>
+      )}
+      </>)}
+
+      {/* ===== 治験計画概要タブ ===== */}
+      {activeTab === "plan" && (
         <Section title={t("Trial plan summary", "治験計画概要")}>
           <div className="form-grid">
             {show("cr_protocolno") && <Field label={t("Protocol ID", "実施計画書識別記号")} mark={mk("cr_protocolno")}><input className="tin" value={draft.protocolNo} disabled={!editable} onChange={(e) => set((n) => (n.protocolNo = e.target.value))} /></Field>}
@@ -379,15 +410,8 @@ export function NotificationDetail({
         </Section>
       )}
 
-      {/* ===== 備考（全種別。開発中止届では必須◎のためセクションから独立させる） ===== */}
-      {show("cr_remarks") && (
-        <Section title={t("Remarks", "備考")}>
-          <Field label={t("Remarks", "備考（通信欄）")} mark={mk("cr_remarks")} wide><textarea className="ta" value={draft.remarks ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.remarks = e.target.value))} placeholder={draft.notifType === "devDiscontinuation" ? "開発中止届では実質必須（中止の経緯・以降の対応等）" : ""} /></Field>
-        </Section>
-      )}
-
-      {/* ===== 治験使用薬 ===== */}
-      {draft.notifType !== "devDiscontinuation" && (
+      {/* ===== 治験使用薬タブ ===== */}
+      {activeTab === "drugs" && (
         <Section title={t("Study drugs", "治験使用薬")} sub={t("Serial no. = matching-key type: constant across the series (plan → completion). Expand a row for all fields.", "順序番号＝突合キー型：シリーズ内で不変。行を展開すると全項目を入力できます。")} right={editable ? <Btn kind="p" small onClick={addStudyDrug}>{Icon.plus} {t("Add drug", "薬を追加")}</Btn> : undefined}>
           {draft.studyDrugs.length === 0 && <div className="rt-empty">{t("No study drugs. Add the main investigational drug first.", "治験使用薬がありません。まず主たる被験薬を追加してください。")}</div>}
           {draft.studyDrugs.map((d) => (
@@ -396,8 +420,8 @@ export function NotificationDetail({
         </Section>
       )}
 
-      {/* ===== 実施医療機関（医師ロスター・数量） ===== */}
-      {draft.notifType !== "devDiscontinuation" && (
+      {/* ===== 実施医療機関タブ（医師ロスター・数量） ===== */}
+      {activeTab === "sites" && (
         <Section title={t("Medical institutions", "実施医療機関")} sub={t("Doctors are edited as a roster; the server generates event rows with movement type.", "医師はロスター操作で編集。保存時に異動区分つきのイベント行が生成されます。")} right={editable ? <Btn kind="p" small onClick={addSite}>{Icon.plus} {t("Add site", "施設を追加")}</Btn> : undefined}>
           {draft.sites.length === 0 && <div className="rt-empty">{t("No sites yet.", "実施医療機関がありません。")}</div>}
           {draft.sites.map((s) => (
@@ -413,7 +437,9 @@ export function NotificationDetail({
         </Section>
       )}
 
-      {/* ===== 参照治験届出 ===== */}
+      {/* ===== 参照・添付・照会タブ ===== */}
+      {activeTab === "refs" && (<>
+
       {draft.notifType !== "devDiscontinuation" && (
         <Section title={t("Referenced notifications", "参照治験届出")} sub={t("Other CTN filings referenced by this one.", "この届が参照する治験届出情報。")} right={editable ? <Btn small onClick={addReference}>{Icon.plus} {t("Add", "追加")}</Btn> : undefined}>
           {draft.references.length === 0 ? <div className="rt-empty">{t("No references.", "参照はありません。")}</div> : (
@@ -468,6 +494,7 @@ export function NotificationDetail({
           </div>
         </Section>
       )}
+      </>)}
 
       <div className="detail-foot">
         <span className="muted small">

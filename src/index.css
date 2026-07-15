@@ -50,7 +50,7 @@
   .btn-p{background:var(--blue);color:#fff}.btn-p:hover{background:#1e7cb1}
   .btn-g{border:1px solid var(--line);color:var(--ink-2);background:#fff}.btn-g:hover{background:var(--line-2);border-color:var(--ink-4)}
 
-  .scroll{flex:1;min-height:0;overflow-y:auto;padding:28px 32px}
+  .scroll{flex:1;min-height:0;overflow-y:auto;padding:20px 32px 28px}
   .view{display:none}.view.on{display:block;animation:f .22s ease}
   @keyframes f{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
   .vh{margin-bottom:22px}
@@ -608,3 +608,74 @@
 .drug-serial{font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;font-size:12.5px;min-width:32px}
 .drug-name{font-size:13.5px;font-weight:600}
 .drugcard-b{padding:16px 14px;display:flex;flex-direction:column;gap:14px}
+
+/* ============================================================
+   CTN — revision 3 (section tabs, import toolbar, perm banner, alert bg)
+   ============================================================ */
+/* detail section tabs (horizontal shortcut buttons) */
+.detail-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:6px;box-shadow:var(--sh)}
+.dtab{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink-2);background:none;border:none;transition:.12s;white-space:nowrap}
+.dtab:hover{background:var(--line-2)}
+.dtab.on{background:var(--navy);color:#fff}
+
+/* dashboard alert / reminder card tints */
+.sect-alert{background:#fdf1f2;border-color:#f3d3d6}
+.sect-alert .sect-h{border-bottom-color:#f3d3d6}
+.sect-reminder{background:#fdf9ec;border-color:#efe4bf}
+.sect-reminder .sect-h{border-bottom-color:#efe4bf}
+
+/* import toolbar */
+.import-toolbar{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding:10px 14px;background:var(--blue-soft);border:1px solid #d6e7f4;border-radius:10px}
+
+/* settings permission banner */
+.perm-banner{border-radius:11px;padding:13px 16px;margin-bottom:18px;font-size:12.5px;line-height:1.55}
+.perm-banner b{display:block;font-size:13px;margin-bottom:3px}
+.perm-banner.ok{background:var(--green-bg);border:1px solid #bfe4cf;color:#155e3f}
+.perm-banner.ro{background:var(--amber-bg);border:1px solid #ecd9a8;color:var(--amber)}
+
+/* ============================================================
+   CTN — ALTERNATIVE DESIGN THEME "Modern"
+   Light sidebar, indigo/violet accent, rounder cards, softer shadows.
+   Same structure/content; palette + a few component styles overridden.
+   ============================================================ */
+.app.theme-modern{
+  --navy:#4f46e5; --blue:#6d5efc; --blue-soft:#eef0ff;
+  --ink:#1e2233; --ink-2:#5a6072; --ink-3:#9aa0b4; --ink-4:#c3c8d6;
+  --line:#ecedf4; --line-2:#f5f6fb; --bg:#f6f7fb; --white:#fff;
+  --green:#10b981; --green-bg:#e7f7f0;
+  --amber:#f59e0b; --amber-bg:#fdf1de;
+  --red:#ef4444; --red-bg:#fdecec;
+  --sh:0 1px 3px rgba(28,28,60,.05); --sh-2:0 18px 44px rgba(28,28,60,.15);
+  --r:16px;
+  /* status pill colors */
+  --st-draft:#9aa0b4; --st-review:#6d5efc; --st-approved:#10b981; --st-submitted:#4f46e5;
+  --ty-plan:#6d5efc; --ty-change:#f59e0b; --ty-term:#ef4444; --ty-comp:#10b981; --ty-dev:#9aa0b4;
+  background:var(--bg);
+}
+/* light sidebar */
+.app.theme-modern .side{background:#fff;color:var(--ink);border-right:1px solid var(--line)}
+.app.theme-modern .brand b{color:var(--ink)}
+.app.theme-modern .brand span{color:var(--ink-3)}
+.app.theme-modern .brand .m{background:linear-gradient(135deg,#6d5efc,#a78bfa)}
+.app.theme-modern .nav a{color:var(--ink-2);font-weight:600}
+.app.theme-modern .nav a:hover{background:var(--line-2);color:var(--ink)}
+.app.theme-modern .nav a.on{background:var(--blue-soft);color:var(--blue)}
+.app.theme-modern .nav a.on svg{opacity:1}
+.app.theme-modern .nav-badge{background:var(--blue);color:#fff}
+.app.theme-modern .nav a.on .nav-badge{background:var(--blue);color:#fff}
+.app.theme-modern .sfoot{border-top-color:var(--line)}
+.app.theme-modern .sfoot .a{background:var(--blue-soft);color:var(--blue)}
+.app.theme-modern .sfoot .n{color:var(--ink)}
+.app.theme-modern .sfoot .r{color:var(--ink-3)}
+/* rounder cards & controls */
+.app.theme-modern .kpi,.app.theme-modern .card,.app.theme-modern .sect,.app.theme-modern .filters,.app.theme-modern .series-card{border-radius:16px}
+.app.theme-modern .btn{border-radius:11px}
+.app.theme-modern .tin,.app.theme-modern .ta,.app.theme-modern select.sel{border-radius:11px}
+.app.theme-modern .lang{border-radius:11px}
+.app.theme-modern .modal{border-radius:20px}
+/* accent-tinted lang/theme toggle active */
+.app.theme-modern .lang button.on{background:var(--blue)}
+/* KPI numbers a touch softer */
+.app.theme-modern .kpi .v{letter-spacing:-.5px}
+/* header stays white, subtle */
+.app.theme-modern .top{border-bottom-color:var(--line)}

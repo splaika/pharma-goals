@@ -69,11 +69,6 @@ export function MasterView({ db, repo, actorId, reload, flash }: { db: CtnDb; re
 
   return (
     <>
-      <div className="vh">
-        <div className="t">{t("Master management", "マスタ管理")}</div>
-        <div className="s">{t("Register, edit and logically delete masters. Deletion keeps history (no physical delete).", "登録・編集・論理削除。削除は履歴保持（物理削除しない）。")}</div>
-      </div>
-
       <div className="mtabs">
         {tabs.map(([k, en, ja, n]) => (
           <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{t(en, ja)} <span className="mtab-n">{n}</span></button>

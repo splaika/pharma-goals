@@ -34,11 +34,6 @@ export function AuditView({ db }: { db: CtnDb }) {
 
   return (
     <>
-      <div className="vh">
-        <div className="t">{t("Audit log", "監査ログ")}</div>
-        <div className="s">{t("Who did what, when, to which record — every operation is recorded.", "誰が・いつ・どのレコードの・何を・どう変えたか。全操作を記録します。")}</div>
-      </div>
-
       <div className="filters">
         <div className="fg">
           <label>{t("Filter", "フィルタ")}</label>
