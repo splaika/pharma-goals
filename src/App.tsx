@@ -44,6 +44,20 @@ export default function App() {
       return "enterprise";
     }
   });
+  const [mode, setMode] = useState<"light" | "dark">(() => {
+    try {
+      return localStorage.getItem("ctn.mode") === "dark" ? "dark" : "light";
+    } catch {
+      return "light";
+    }
+  });
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("ctn.sidebar") === "collapsed";
+    } catch {
+      return false;
+    }
+  });
 
   const t = useMemo(() => makeT(lang), [lang]);
   const repo = getRepository();
@@ -59,6 +73,20 @@ export default function App() {
       /* ignore */
     }
   }, [theme]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("ctn.mode", mode);
+    } catch {
+      /* ignore */
+    }
+  }, [mode]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("ctn.sidebar", collapsed ? "collapsed" : "expanded");
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed]);
 
   const reload = async () => setDb(await repo.getState());
   useEffect(() => {
@@ -163,8 +191,8 @@ export default function App() {
 
   return (
     <LangContext.Provider value={{ lang, setLang: (l) => setLang(l as Lang), t }}>
-      <div className={`app${lang === "ja" ? " ja" : ""} theme-${theme}`}>
-        <Sidebar view={selected ? "notifications" : view} onNavigate={(v) => { setSelectedId(null); setView(v); }} user={user} badges={{ dashboard: alerts.length }} />
+      <div className={`app${lang === "ja" ? " ja" : ""} theme-${theme} mode-${mode}${collapsed ? " collapsed" : ""}`}>
+        <Sidebar view={selected ? "notifications" : view} onNavigate={(v) => { setSelectedId(null); setView(v); }} user={user} badges={{ dashboard: alerts.length }} collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />
         <div className="main">
           <header className="top">
             <h1>{selected ? t("Filing detail", "治験届 詳細") : t(...TITLES[view])}</h1>
@@ -180,6 +208,18 @@ export default function App() {
               <button className={theme === "enterprise" ? "on" : ""} onClick={() => setTheme("enterprise")}>{t("Classic", "標準")}</button>
               <button className={theme === "modern" ? "on" : ""} onClick={() => setTheme("modern")}>{t("Modern", "モダン")}</button>
             </div>
+            <button
+              className="icon-btn mode-toggle"
+              onClick={() => setMode((m) => (m === "dark" ? "light" : "dark"))}
+              title={mode === "dark" ? t("Switch to light mode", "ライトモードに切替") : t("Switch to dark mode", "ダークモードに切替")}
+              aria-label={mode === "dark" ? t("Switch to light mode", "ライトモードに切替") : t("Switch to dark mode", "ダークモードに切替")}
+            >
+              {mode === "dark" ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="4.2" /><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M19.1 4.9l-1.6 1.6M6.5 17.5l-1.6 1.6" /></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
+              )}
+            </button>
             <div className="lang">
               <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
               <button className={lang === "ja" ? "on" : ""} onClick={() => setLang("ja")}>JA</button>

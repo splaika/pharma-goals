@@ -24,7 +24,7 @@ const ICONS: Record<ViewKey, JSX.Element> = {
   ),
 };
 
-export function Sidebar({ view, onNavigate, user, badges }: { view: ViewKey; onNavigate: (v: ViewKey) => void; user: DemoUser; badges?: Partial<Record<ViewKey, number>> }) {
+export function Sidebar({ view, onNavigate, user, badges, collapsed, onToggleCollapse }: { view: ViewKey; onNavigate: (v: ViewKey) => void; user: DemoUser; badges?: Partial<Record<ViewKey, number>>; collapsed?: boolean; onToggleCollapse?: () => void }) {
   const { t } = useLang();
   const items: [ViewKey, string, string][] = [
     ["dashboard", "Dashboard", "ダッシュボード"],
@@ -40,21 +40,31 @@ export function Sidebar({ view, onNavigate, user, badges }: { view: ViewKey; onN
         <div className="m">
           <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="#fff" strokeWidth={2.2}><path d="M9 12l2 2 4-4" /><path d="M21 12c0 5-3.5 7.5-8.2 8.9a1 1 0 0 1-.6 0C7.5 19.5 4 17 4 12V6a1 1 0 0 1 .7-1l7-2.3a1 1 0 0 1 .6 0L19.3 5A1 1 0 0 1 20 6Z" /></svg>
         </div>
-        <div>
+        <div className="txt">
           <b>CTN Suite</b>
           <span>治験届管理システム</span>
         </div>
+        {onToggleCollapse && (
+          <button
+            className="collapse-btn"
+            onClick={onToggleCollapse}
+            title={collapsed ? t("Expand menu", "メニューを開く") : t("Collapse menu", "メニューを折りたたむ")}
+            aria-label={collapsed ? t("Expand menu", "メニューを開く") : t("Collapse menu", "メニューを折りたたむ")}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M15 6l-6 6 6 6" /></svg>
+          </button>
+        )}
       </div>
       <nav className="nav">
         {items.map(([key, en, ja]) => (
-          <a key={key} className={view === key ? "on" : ""} onClick={() => onNavigate(key)}>
+          <a key={key} className={view === key ? "on" : ""} onClick={() => onNavigate(key)} title={collapsed ? t(en, ja) : undefined}>
             {ICONS[key]}
             <span>{t(en, ja)}</span>
             {badges?.[key] ? <span className="nav-badge">{badges[key]}</span> : null}
           </a>
         ))}
       </nav>
-      <a className="hublink" href="https://splaika.github.io/ctn-prototype/" target="_blank" rel="noopener">
+      <a className="hublink" href="https://splaika.github.io/ctn-prototype/" target="_blank" rel="noopener" title={collapsed ? t("Doc hub", "ドキュメントハブ") : undefined}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
         <span>{t("Doc hub", "ドキュメントハブ")}</span>
         <span className="ext">↗</span>
