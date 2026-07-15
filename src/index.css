@@ -1,12 +1,19 @@
 :root{
     --navy:#002060; --blue:#238CC5; --blue-soft:#EAF3FA;
-    --ink:#101B2D; --ink-2:#46556B; --ink-3:#8A98AC; --ink-4:#B9C3D1;
+    --ink:#101B2D; --ink-2:#46556B; --ink-3:#66707f; --ink-4:#B9C3D1;
+    --ink-faint:#8A98AC;                                  /* 装飾/大文字ラベル専用（AA未満を許容） */
     --line:#E6ECF3; --line-2:#F1F5F9; --bg:#F7F9FC; --white:#fff; --surface:#fff;
     --green:#1C8A5B; --green-bg:#E5F4EC;
     --amber:#A9760F; --amber-bg:#FAF0DA;
     --red:#C0392B; --red-bg:#FBE8E5;
     --sh:0 1px 2px rgba(16,27,45,.04); --sh-2:0 10px 30px rgba(16,27,45,.12);
     --r:12px;
+    /* radius scale（段階を統一） */
+    --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
+    /* keyboard focus ring（テーマの accent を使用） */
+    --focus:var(--blue);
+    /* 強調KPI：カード全体を"やや薄めの意味色"で塗り、文字は白 */
+    --kpi-crit:#d95c6a; --kpi-warn:#cf8a3a;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
@@ -644,9 +651,9 @@
    ============================================================ */
 .app.theme-modern{
   --navy:#4f46e5; --blue:#6d5efc; --blue-soft:#eef0ff;
-  --ink:#1e2233; --ink-2:#5a6072; --ink-3:#9aa0b4; --ink-4:#c3c8d6;
-  /* gray canvas: --bg 10% darker; sidebar shares --bg; structural borders are white */
-  --line:#ffffff; --line-2:#e9ebf1; --bg:#dddee2; --white:#fff; --surface:#fff;
+  --ink:#1e2233; --ink-2:#5a6072; --ink-3:#6b7180; --ink-4:#c3c8d6; --ink-faint:#9aa0b4;
+  --line:#ecedf4; --line-2:#f5f6fb; --bg:#f6f7fb; --white:#fff; --surface:#fff;
+  --focus:var(--blue);   /* モダンの accent(#6d5efc) でフォーカスリングを再計算 */
   --green:#10b981; --green-bg:#e7f7f0;
   --amber:#f59e0b; --amber-bg:#fdf1de;
   --red:#ef4444; --red-bg:#fdecec;
@@ -657,8 +664,8 @@
   --ty-plan:#6d5efc; --ty-change:#f59e0b; --ty-term:#ef4444; --ty-comp:#10b981; --ty-dev:#9aa0b4;
   background:var(--bg);
 }
-/* sidebar shares the gray canvas; white line divides it from the content */
-.app.theme-modern .side{background:var(--bg);color:var(--ink);border-right:1px solid var(--line)}
+/* light sidebar */
+.app.theme-modern .side{background:var(--surface);color:var(--ink);border-right:1px solid var(--line)}
 .app.theme-modern .brand b{color:var(--ink)}
 .app.theme-modern .brand span{color:var(--ink-3)}
 .app.theme-modern .brand .m{background:linear-gradient(135deg,#6d5efc,#a78bfa)}
@@ -684,19 +691,8 @@
 .app.theme-modern .lang button.on{background:var(--blue)}
 /* KPI numbers a touch softer */
 .app.theme-modern .kpi .v{letter-spacing:-.5px}
-/* header shares the gray canvas with a white divider line */
-.app.theme-modern .top{background:var(--bg);border-bottom-color:var(--line)}
-/* structural borders are white, so keep form controls defined on white cards (light only) */
-.app.theme-modern:not(.mode-dark) .tin,
-.app.theme-modern:not(.mode-dark) .ta,
-.app.theme-modern:not(.mode-dark) select.sel,
-.app.theme-modern:not(.mode-dark) .btn-g,
-.app.theme-modern:not(.mode-dark) .icon-btn,
-.app.theme-modern:not(.mode-dark) .lang,
-.app.theme-modern:not(.mode-dark) .chip,
-.app.theme-modern:not(.mode-dark) .mtabs button,
-.app.theme-modern:not(.mode-dark) .type-card,
-.app.theme-modern:not(.mode-dark) .dropzone{border-color:#d8dbe2}
+/* header stays surface, subtle divider */
+.app.theme-modern .top{border-bottom-color:var(--line)}
 
 /* ============================================================
    DARK MODE  (color axis, independent of the standard/modern theme)
@@ -708,8 +704,10 @@
   --bg:#0e131a; --surface:#182029; --white:#182029;
   --ink:#e8eef4; --ink-2:#b4c1d0; --ink-3:#8493a6; --ink-4:#5c6b7d;
   --line:#28323e; --line-2:#1d2530;
+  --ink-faint:#6a7789;
   --blue-soft:#15304a;
   --green-bg:#12261d; --amber-bg:#2b2212; --red-bg:#2e1b18;
+  --kpi-crit:#c1505d; --kpi-warn:#b07a30; --focus:#8b7dff;
   --sh:0 1px 2px rgba(0,0,0,.5); --sh-2:0 16px 40px rgba(0,0,0,.6);
   background:var(--bg);
   color-scheme:dark;
@@ -757,3 +755,52 @@
 .hublink.manual>span:not(.ext){white-space:nowrap;font-size:12px}
 .hublink.manual .ext{margin-left:auto;flex:none;font-size:9px;font-weight:700;letter-spacing:.02em;padding:1px 5px;border-radius:6px;background:var(--line-2);color:var(--ink-3)}
 .app.collapsed .hublink.manual .ext{display:none}
+
+/* ============================================================
+   UI POLISH — design-lab で採択した改善（P1改/P2/P3）
+   ============================================================ */
+
+/* --- P1: キーボードフォーカスの可視化（focus-visible リング） --- */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+.chip:focus-visible,
+.nav a:focus-visible,
+.dtab:focus-visible,
+.seg button:focus-visible,
+.mtabs button:focus-visible,
+.col-drag:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--focus) 42%, transparent);
+}
+
+/* --- P1改: 強調KPI（カード全体を"やや薄めの意味色"で塗り＋白文字） --- */
+/* トーンは border-top ではなくカード全面塗りに変更 */
+.kpi-red{background:var(--kpi-crit);border-color:transparent;box-shadow:var(--sh-2)}
+.kpi-amber{background:var(--kpi-warn);border-color:transparent;box-shadow:var(--sh-2)}
+.kpi-red .l,.kpi-red .v,.kpi-red .m,
+.kpi-amber .l,.kpi-amber .v,.kpi-amber .m{color:#fff}
+.kpi-red .l,.kpi-amber .l{opacity:.92}
+.kpi-red .v small,.kpi-amber .v small{color:rgba(255,255,255,.75)}
+
+/* --- P2/P3: データテーブルの走査性（数値右寄せ・薄zebra・行密度） --- */
+.ntbl td{padding:10px 16px}                                   /* やや高密度 */
+.ntbl th.tnum,.ntbl td.tnum{text-align:right}
+.ntbl tbody tr:nth-child(even):not(:hover){background:color-mix(in srgb, var(--ink) 3.5%, transparent)}
+
+/* --- P2: 読み込み中スケルトン --- */
+.sk-row{display:grid;grid-template-columns:1.4fr 1.2fr .7fr .7fr 1fr;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line-2)}
+.sk{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--line-2),var(--line),var(--line-2));background-size:200% 100%;animation:sk-shine 1.3s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes sk-shine{to{background-position:-200% 0}}
+.sk-note{font-size:12px;color:var(--ink-3);padding:10px 16px}
+.boot-card{width:min(560px,90vw);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden;text-align:left}
+
+/* --- P3: 日本語タイポ（約物詰め）。数値は各所で tabular-nums 済み --- */
+body.ja{font-feature-settings:"palt" 1}
+
+@media (prefers-reduced-motion: reduce){
+  .sk{animation:none}
+}

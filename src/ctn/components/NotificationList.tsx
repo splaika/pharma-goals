@@ -87,7 +87,7 @@ export function NotificationTable({ db, notifications, onOpen }: { db: CtnDb; no
               <th
                 key={k}
                 draggable
-                className="col-drag"
+                className={`col-drag${COLS[k].cls?.includes("tnum") ? " tnum" : ""}`}
                 onDragStart={() => setDrag(i)}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => { if (drag != null) move(drag, i); setDrag(null); }}

@@ -171,7 +171,19 @@ export default function App() {
     flash(t("XML generated & validated", "XMLを生成・検証しました"));
   };
 
-  if (!db) return <div className="boot">Loading…</div>;
+  if (!db)
+    return (
+      <div className="boot">
+        <div className="boot-card">
+          <div className="sk-note">{t("Loading…", "読み込み中…")}</div>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div className="sk-row" key={i}>
+              <span className="sk" /><span className="sk" /><span className="sk" /><span className="sk" /><span className="sk" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
 
   const alerts = deriveAlerts(db);
   const selected = selectedId ? db.notifications.find((n) => n.id === selectedId) ?? null : null;

@@ -34,8 +34,8 @@ export function Dashboard({ db, onOpen, onNavigate }: { db: CtnDb; onOpen: (id: 
         <Kpi label={t("Total filings", "届出総数")} value={stats.total} onClick={() => onNavigate("notifications")} />
         <Kpi label={t("Submitted", "提出済み")} value={stats.submitted} />
         <Kpi label={t("In progress", "進行中")} value={stats.inProgress} />
-        <Kpi label={t("Alerts", "アラート")} value={stats.alerts} />
-        <Kpi label={t("Reminders", "リマインダ")} value={stats.reminders} />
+        <Kpi label={t("Alerts", "アラート")} value={stats.alerts} tone={stats.alerts > 0 ? "red" : undefined} />
+        <Kpi label={t("Reminders", "リマインダ")} value={stats.reminders} tone={stats.reminders > 0 ? "amber" : undefined} />
       </div>
 
       <div className="dash-grid">
