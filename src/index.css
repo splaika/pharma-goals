@@ -36,6 +36,10 @@
   .sfoot{padding:16px 18px;border-top:1px solid rgba(255,255,255,.1);display:flex;gap:10px;align-items:center}
   .sfoot .a{width:30px;height:30px;border-radius:50%;background:#3a6aa3;display:grid;place-items:center;font-weight:600;font-size:12px}
   .sfoot .n{font-size:12.5px;font-weight:500}.sfoot .r{font-size:10.5px;color:#9db4d6}
+  .hublink{display:flex;align-items:center;gap:12px;margin:0 12px 8px;padding:9px 13px;border-radius:9px;color:#9db4d6;font-size:12.5px;font-weight:500;cursor:pointer;transition:.14s;border:1px dashed rgba(255,255,255,.14)}
+  .hublink svg{width:16px;height:16px;opacity:.8}
+  .hublink:hover{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.28)}
+  .hublink .ext{margin-left:auto;font-size:12px}
 
   /* main */
   .main{display:flex;flex-direction:column;min-width:0;min-height:0}
@@ -667,6 +671,8 @@
 .app.theme-modern .sfoot .a{background:var(--blue-soft);color:var(--blue)}
 .app.theme-modern .sfoot .n{color:var(--ink)}
 .app.theme-modern .sfoot .r{color:var(--ink-3)}
+.app.theme-modern .hublink{color:var(--ink-3);border-color:var(--line)}
+.app.theme-modern .hublink:hover{background:var(--line-2);color:var(--ink);border-color:var(--line)}
 /* rounder cards & controls */
 .app.theme-modern .kpi,.app.theme-modern .card,.app.theme-modern .sect,.app.theme-modern .filters,.app.theme-modern .series-card{border-radius:16px}
 .app.theme-modern .btn{border-radius:11px}
