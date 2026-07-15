@@ -33,12 +33,25 @@ export function is30DayReview(n: Pick<Notification, "notifType" | "filingCount" 
 //   中止/終了/開発中止は対象外
 // ---------------------------------------------------------------------------
 export function computeDeadline(
-  n: Pick<Notification, "notifType" | "filingCount" | "kubun" | "plannedStartDate">
+  n: Pick<Notification, "notifType" | "filingCount" | "kubun" | "plannedStartDate" | "changeLocations">
 ): string | undefined {
-  if (n.notifType !== "plan" && n.notifType !== "change") return undefined;
   if (!n.plannedStartDate) return undefined;
   const r = getRules(); // 設定画面のオフセット（既定 30 / 14）
-  return addDays(n.plannedStartDate, is30DayReview(n) ? -r.offset30 : -r.offset14);
+  if (n.notifType === "plan") {
+    // 初回計画届＝30日調査（開始予定日−30日）／N回届（新規プロトコール）＝−14日
+    return addDays(n.plannedStartDate, is30DayReview(n) ? -r.offset30 : -r.offset14);
+  }
+  if (n.notifType === "change") {
+    // 変更届は「提出時期」4区分で算定（手引き p.86-89）。
+    // plannedStartDate を「変更（予定）日」の代理として使用（本デモの簡略化・要確認）。
+    const timing = changeTiming(n.changeLocations ?? []);
+    if (!timing) return undefined;
+    if (timing === "before") return n.plannedStartDate; // 変更前：変更（予定）日まで
+    if (timing === "m6") return addDays(n.plannedStartDate, 182); // 変更後6ヶ月以内
+    if (timing === "y1") return addDays(n.plannedStartDate, 365); // 変更後1年以内
+    return undefined; // 終了・中止時：固定期限なし
+  }
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,6 +69,33 @@ const CHANGE_LOC_KUBUN: Record<number, number> = {
   100000806: KUBUN.k3, // 届出担当者の変更
   100000807: KUBUN.k3, // 備考欄の追加
 };
+
+// 変更届の「提出時期」4区分（手引き p.86-89）。区分1/2/3ではなく提出タイミングで規定。
+export type ChangeTiming = "before" | "m6" | "y1" | "end";
+const CHANGE_LOC_TIMING: Record<number, ChangeTiming> = {
+  100000800: "before", // 目的の変更 → 変更前
+  100000801: "before", // 対象疾患の追加 → 変更前
+  100000802: "before", // 被験薬（30日調査対象）の追加 → 変更前
+  100000803: "before", // 治験使用薬の追加 → 変更前（要確認・保守的）
+  100000804: "y1", // 治験分担医師の追加・削除 → 変更後1年以内
+  100000805: "m6", // CROの追加・変更 → 変更後6ヶ月以内
+  100000806: "m6", // 届出担当者（代表者）の変更 → 変更後6ヶ月以内
+  100000807: "m6", // 備考欄の追加 → 変更後6ヶ月以内（要確認）
+};
+const TIMING_RANK: Record<ChangeTiming, number> = { before: 0, m6: 1, y1: 2, end: 3 };
+export const TIMING_LABEL: Record<ChangeTiming, [string, string]> = {
+  before: ["Before the change", "変更前"],
+  m6: ["Within 6 months", "変更後6ヶ月以内"],
+  y1: ["Within 1 year", "変更後1年以内"],
+  end: ["By completion/discontinuation", "終了・中止時でOK"],
+};
+
+/** 変更箇所群から最も早い提出時期を返す（変更前＜6ヶ月＜1年＜終了時）。未選択は null。 */
+export function changeTiming(locs: number[]): ChangeTiming | null {
+  if (!locs || locs.length === 0) return null;
+  const timings = locs.map((l) => CHANGE_LOC_TIMING[l] ?? "m6");
+  return timings.reduce((a, b) => (TIMING_RANK[a] <= TIMING_RANK[b] ? a : b));
+}
 
 export interface KubunSuggestion {
   value: number; // KUBUN.k1|k2|k3

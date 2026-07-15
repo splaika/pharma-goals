@@ -76,7 +76,8 @@ export function generateCtnXml(n: Notification, ctx: XmlContext): string {
 
   // ---- ルート共通（成分・回数・受付番号） ----
   x.leaf("COMPOUNDCODE", ctx.compound.compoundCode);
-  x.leaf("FILINGCOUNT", n.filingCount);
+  // 開発中止届は届出回数不要（"00"）。それ以外は対象プロトコールの届出回数。
+  x.leaf("FILINGCOUNT", n.notifType === "devDiscontinuation" ? "00" : n.filingCount);
   if (n.changeCount != null) x.leaf("CHANGECOUNT", n.changeCount);
   if (n.receptNo) x.leaf("RECEPTNO", n.receptNo);
   x.leaf("NOTEDATE", n.noteDate ?? "");

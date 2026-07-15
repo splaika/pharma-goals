@@ -118,7 +118,7 @@ export default function App() {
       compoundId = c.id;
     }
     if (!compoundId) return;
-    const n = await repo.createNotification({ compoundId, notifType: p.notifType, createdBy: userId });
+    const n = await repo.createNotification({ compoundId, notifType: p.notifType, targetFilingCount: p.targetFilingCount, createdBy: userId });
     await reload();
     setWizard(false);
     setSelectedId(n.id);

@@ -36,7 +36,7 @@ const COLS: Record<ColKey, ColDef> = {
   compound: { label: ["Compound", "治験成分記号"], cls: "nm", render: (n, db) => db.compounds.find((c) => c.id === n.compoundId)?.compoundCode ?? "—" },
   protocol: { label: ["Protocol No.", "治験計画書番号"], cls: "muted small", render: (n) => n.protocolNo || "—" },
   type: { label: ["Type", "届出種別"], render: (n) => <TypeBadge type={n.notifType} full /> },
-  count: { label: ["Count", "回数"], cls: "tnum", render: (n) => <>#{n.filingCount}{n.changeCount != null && <small className="muted"> 変{n.changeCount}</small>}</> },
+  count: { label: ["Count", "回数"], cls: "tnum", render: (n) => n.notifType === "devDiscontinuation" ? <span className="muted" title="開発中止届は届出回数不要（00）">00</span> : <>#{n.filingCount}{n.changeCount != null && <small className="muted"> 変{n.changeCount}</small>}</> },
   kubun: { label: ["Kubun", "届出区分"], render: (n) => (n.kubun ? <span className="kubun-chip">{label(SET.kubun, n.kubun)}</span> : <span className="muted">—</span>) },
   status: { label: ["Status", "ステータス"], render: (n) => <StatusPill status={n.status} /> },
   deadline: { label: ["Deadline", "提出期限"], render: (n) => <DeadlineCell n={n} /> },

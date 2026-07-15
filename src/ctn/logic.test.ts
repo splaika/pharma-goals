@@ -3,6 +3,7 @@
 // ハンドオフ第5節：採番2類型・区分推奨・外字・職務分離・提出ゲート・XML生成は必須。
 // ============================================================================
 import { describe, it, expect } from "vitest";
+import { MockCtnRepository } from "./data/mockRepository";
 import {
   is30DayReview,
   computeDeadline,
@@ -45,14 +46,23 @@ describe("30日調査対象の判定 (S1)", () => {
 });
 
 describe("提出期限の算定 (S2)", () => {
-  it("30日調査対象は開始予定日 −30日", () => {
-    expect(computeDeadline({ notifType: "plan", filingCount: 1, plannedStartDate: "2026-05-01" })).toBe("2026-04-01");
+  it("初回計画届（30日調査対象）は開始予定日 −30日", () => {
+    expect(computeDeadline({ notifType: "plan", filingCount: 1, changeLocations: [], plannedStartDate: "2026-05-01" })).toBe("2026-04-01");
   });
-  it("通常は開始予定日 −14日", () => {
-    expect(computeDeadline({ notifType: "change", filingCount: 2, kubun: KUBUN.k3, plannedStartDate: "2026-05-01" })).toBe("2026-04-17");
+  it("N回届（新規プロトコール）は開始予定日 −14日", () => {
+    expect(computeDeadline({ notifType: "plan", filingCount: 2, changeLocations: [], plannedStartDate: "2026-05-01" })).toBe("2026-04-17");
+  });
+  it("変更届：目的の変更＝『変更前』→ 変更（予定）日まで", () => {
+    expect(computeDeadline({ notifType: "change", filingCount: 1, changeLocations: [100000800], plannedStartDate: "2026-05-01" })).toBe("2026-05-01");
+  });
+  it("変更届：CROの変更＝『変更後6ヶ月以内』", () => {
+    expect(computeDeadline({ notifType: "change", filingCount: 1, changeLocations: [100000805], plannedStartDate: "2026-05-01" })).toBe("2026-10-30");
+  });
+  it("変更届：分担医師のみ＝『変更後1年以内』", () => {
+    expect(computeDeadline({ notifType: "change", filingCount: 1, changeLocations: [100000804], plannedStartDate: "2026-05-01" })).toBe("2027-05-01");
   });
   it("中止/終了/開発中止は対象外", () => {
-    expect(computeDeadline({ notifType: "termination", filingCount: 3, plannedStartDate: "2026-05-01" })).toBeUndefined();
+    expect(computeDeadline({ notifType: "termination", filingCount: 1, changeLocations: [], plannedStartDate: "2026-05-01" })).toBeUndefined();
   });
 });
 
@@ -210,5 +220,41 @@ describe("ダッシュボード導出", () => {
     const inq = alerts.find((a) => a.id === "rm-inq-iq")!;
     expect(inq.detailJa).toContain("超過");
     expect(inq.detailJa).not.toContain("残り -");
+  });
+});
+
+// ============================================================================
+// 【根幹】治験届の番号ルール（手引き 2024年3月版）：届出回数=プロトコール通し番号、
+// 変更回数=プロトコール内枝番。変更/終了/中止は届出回数を据え置く。
+// ============================================================================
+describe("採番モデル：届出回数/変更回数（根幹）", () => {
+  it("変更届は届出回数を据え置き、変更回数を採番する", async () => {
+    const repo = new MockCtnRepository();
+    // ABCシリーズ: 計画届 届1 / 変更届 届1・変1 / 終了届 届1
+    const n = await repo.createNotification({ compoundId: "cmp-abc", notifType: "change", createdBy: "u-a" });
+    expect(n.filingCount).toBe(1); // 対象プロトコール(届1)を継承（+1しない）
+    expect(n.changeCount).toBe(2); // 届1内で既に変1があるので変2
+  });
+
+  it("既存成分への計画届（N回届）は届出回数をインクリメント", async () => {
+    const repo = new MockCtnRepository();
+    const n = await repo.createNotification({ compoundId: "cmp-abc", notifType: "plan", createdBy: "u-a" });
+    expect(n.filingCount).toBe(2); // 新規プロトコール → 届2
+    expect(n.changeCount).toBeUndefined();
+  });
+
+  it("新規プロトコールへの変更は、そのプロトコール内で変更回数を採番", async () => {
+    const repo = new MockCtnRepository();
+    const p2 = await repo.createNotification({ compoundId: "cmp-abc", notifType: "plan", createdBy: "u-a" });
+    const c = await repo.createNotification({ compoundId: "cmp-abc", notifType: "change", targetFilingCount: p2.filingCount, createdBy: "u-a" });
+    expect(c.filingCount).toBe(2);
+    expect(c.changeCount).toBe(1); // 届2内で最初の変更
+  });
+
+  it("開発中止届は届出回数を据え置く（XMLでは00）", async () => {
+    const repo = new MockCtnRepository();
+    const n = await repo.createNotification({ compoundId: "cmp-abc", notifType: "devDiscontinuation", createdBy: "u-a" });
+    expect(n.filingCount).toBe(1);
+    expect(n.changeCount).toBeUndefined();
   });
 });

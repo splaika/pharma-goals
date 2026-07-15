@@ -10,6 +10,8 @@ export interface CreatePayload {
   compoundId?: string;
   newCompound?: Omit<Compound, "id" | "createdAt">;
   notifType: NotifTypeKey;
+  /** 変更/終了/中止で対象とするプロトコールの届出回数（計画届＝新規プロトコールでは無視） */
+  targetFilingCount?: number;
 }
 
 export function CreateWizard({ db, onClose, onSubmit }: { db: CtnDb; onClose: () => void; onSubmit: (p: CreatePayload) => void }) {
@@ -18,6 +20,16 @@ export function CreateWizard({ db, onClose, onSubmit }: { db: CtnDb; onClose: ()
   const [mode, setMode] = useState<"existing" | "new">("existing");
   const [compoundId, setCompoundId] = useState(db.compounds[0]?.id ?? "");
   const [notifType, setNotifType] = useState<NotifTypeKey>("plan");
+  const [targetFilingCount, setTargetFilingCount] = useState<number | undefined>(undefined);
+
+  // 対象成分のプロトコール（＝各届出回数の計画届）。変更/終了/中止の対象選択に使用。
+  const protocols = useMemo(
+    () => db.notifications.filter((n) => n.compoundId === compoundId && n.notifType === "plan").sort((a, b) => a.filingCount - b.filingCount),
+    [db, compoundId]
+  );
+  const latestProtocol = protocols[protocols.length - 1]?.filingCount;
+  const effectiveTarget = targetFilingCount ?? latestProtocol;
+  const needsTarget = notifType === "change" || notifType === "termination" || notifType === "completion";
 
   // 新規シリーズ用
   const [code, setCode] = useState("");
@@ -38,7 +50,7 @@ export function CreateWizard({ db, onClose, onSubmit }: { db: CtnDb; onClose: ()
     if (isNewSeries) {
       onSubmit({ notifType: "plan", newCompound: { compoundCode: code.trim(), targetCategory, trialKind: "医薬品", initReceptNo: "", initNoteDate: "", devStatus: DEV_STATUS.active, sponsorId, drugName } });
     } else {
-      onSubmit({ compoundId, notifType });
+      onSubmit({ compoundId, notifType, targetFilingCount: needsTarget ? effectiveTarget : undefined });
     }
   };
 
@@ -122,29 +134,41 @@ export function CreateWizard({ db, onClose, onSubmit }: { db: CtnDb; onClose: ()
             </div>
           ) : (
             <div className="type-grid">
-              {NOTIF_TYPE_ORDER.map((k) => {
-                const notifs = db.notifications.filter((n) => n.compoundId === compoundId);
-                const hasPlan = notifs.some((n) => n.notifType === "plan");
-                const disabled = k === "plan" && hasPlan; // 計画届は初回のみ
-                return (
-                  <button key={k} className={`type-card${effectiveType === k ? " on" : ""}${disabled ? " disabled" : ""}`} disabled={disabled} onClick={() => setNotifType(k)}>
-                    <div className={`type-ico ty-${k}`}>{NOTIF_TYPE_SHORT[k]}</div>
-                    <b>{notifTypeName(k, lang)}</b>
-                    <span className="muted small">
-                      {k === "plan" && t("First filing of a series", "シリーズの初回届")}
-                      {k === "change" && t("Amend an existing plan", "計画の変更")}
-                      {k === "termination" && t("Discontinue mid-trial", "治験の中止")}
-                      {k === "completion" && t("Complete the trial", "治験の終了")}
-                      {k === "devDiscontinuation" && t("Stop development", "開発の中止")}
-                    </span>
-                  </button>
-                );
-              })}
+              {NOTIF_TYPE_ORDER.map((k) => (
+                <button key={k} className={`type-card${effectiveType === k ? " on" : ""}`} onClick={() => setNotifType(k)}>
+                  <div className={`type-ico ty-${k}`}>{NOTIF_TYPE_SHORT[k]}</div>
+                  <b>{k === "plan" ? t("Plan (new protocol)", "治験計画届（新規プロトコール）") : notifTypeName(k, lang)}</b>
+                  <span className="muted small">
+                    {k === "plan" && t("N-th filing: new protocol → filing count +1", "N回届：新規プロトコール（届出回数＋1）")}
+                    {k === "change" && t("Amend an existing protocol (change count +1)", "既存プロトコールの変更（変更回数＋1）")}
+                    {k === "termination" && t("Discontinue mid-trial", "治験の中止")}
+                    {k === "completion" && t("Complete the trial", "治験の終了")}
+                    {k === "devDiscontinuation" && t("Stop development (filing count = 00)", "開発の中止（届出回数＝00）")}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
-          {!isNewSeries && effectiveType !== "plan" && (
+          {/* 変更/終了/中止は対象プロトコール（届出回数）を指定 */}
+          {!isNewSeries && needsTarget && protocols.length > 0 && (
+            <Field label={t("Target protocol (filing count)", "対象プロトコール（届出回数）")} mark="always" wide>
+              <select className="sel" value={effectiveTarget ?? ""} onChange={(e) => setTargetFilingCount(Number(e.target.value))}>
+                {protocols.map((p) => (
+                  <option key={p.id} value={p.filingCount}>
+                    {t("Filing", "届出回数")} #{p.filingCount}{p.protocolNo ? `（${p.protocolNo}）` : ""}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {!isNewSeries && effectiveType === "plan" && (
             <div className="wiz-note" style={{ marginTop: 12 }}>
-              {t("Study drugs, sites and roster are inherited from the latest filing (transcription-free). Edit only the differences.", "治験使用薬・施設・医師ロスターは最新届から継承されます（転記排除）。差分だけを編集してください。")}
+              {t("New protocol under the same compound. Filing count increments; starts fresh (not inherited).", "同一成分の新規プロトコール（N回届）。届出回数がインクリメントされ、継承なしで新規に開始します。")}
+            </div>
+          )}
+          {!isNewSeries && effectiveType !== "plan" && effectiveType !== "devDiscontinuation" && (
+            <div className="wiz-note" style={{ marginTop: 12 }}>
+              {t("Study drugs, sites and roster are inherited from the target protocol's latest filing (transcription-free). Edit only the differences.", "治験使用薬・施設・医師ロスターは対象プロトコールの最新届から継承されます（転記排除）。差分だけを編集してください。")}
             </div>
           )}
         </div>

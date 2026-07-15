@@ -33,6 +33,8 @@ export interface CreateNotificationInput {
   compoundId: string;
   notifType: Notification["notifType"];
   createdBy: string;
+  /** 変更/終了/中止で対象とするプロトコールの届出回数（未指定＝最新プロトコール）。計画届では無視 */
+  targetFilingCount?: number;
   /** 変更/終了/中止/開発中止で、直近の届からの継承元 */
   inheritFromNotificationId?: string;
 }

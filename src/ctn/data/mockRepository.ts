@@ -207,11 +207,26 @@ export class MockCtnRepository implements CtnRepository {
   async createNotification(input: CreateNotificationInput): Promise<Notification> {
     const series = this.seriesNotifs(input.compoundId);
     const compound = this.db.compounds.find((c) => c.id === input.compoundId)!;
-    const filingCount = series.length ? Math.max(...series.map((n) => n.filingCount)) + 1 : 1;
-    const changeCount =
-      input.notifType === "change"
-        ? Math.max(0, ...series.filter((n) => n.notifType === "change").map((n) => n.changeCount ?? 0)) + 1
-        : undefined;
+    // 【根幹】手引きの番号体系（ツリー）に従う：
+    // 届出回数＝プロトコール（治験計画届）の通し番号。新規プロトコールの計画届のみ +1。
+    // 変更届・終了届・中止届・開発中止届は対象プロトコールの届出回数を「据え置き」、
+    // 変更届のみ「変更回数」を対象プロトコール内で採番する。
+    const protocols = series.filter((n) => n.notifType === "plan");
+    const maxProtocol = protocols.length ? Math.max(...protocols.map((p) => p.filingCount)) : 0;
+    let filingCount: number;
+    let changeCount: number | undefined;
+    if (input.notifType === "plan") {
+      // 新規プロトコール（N回届）または初回計画届 → 届出回数をインクリメント
+      filingCount = maxProtocol + 1;
+      changeCount = undefined;
+    } else {
+      // 既存プロトコールへの届 → 対象プロトコールの届出回数を継承（据え置き）
+      filingCount = input.targetFilingCount ?? (maxProtocol || 1);
+      changeCount =
+        input.notifType === "change"
+          ? Math.max(0, ...series.filter((n) => n.notifType === "change" && n.filingCount === filingCount).map((n) => n.changeCount ?? 0)) + 1
+          : undefined;
+    }
 
     const base: Notification = {
       id: `nt-${this.nid()}`,
@@ -235,10 +250,15 @@ export class MockCtnRepository implements CtnRepository {
       createdAt: TODAY,
     };
 
-    // 直近の届からの継承（転記の排除）
-    const from = input.inheritFromNotificationId
-      ? this.db.notifications.find((n) => n.id === input.inheritFromNotificationId)
-      : [...series].sort((a, b) => b.filingCount - a.filingCount)[0];
+    // 対象プロトコール（同一届出回数）の最新届から継承（転記の排除）。
+    // 新規プロトコールの計画届（N回届）は継承しない＝新しいプロトコールとして開始。
+    const from =
+      input.notifType === "plan"
+        ? undefined
+        : input.inheritFromNotificationId
+          ? this.db.notifications.find((n) => n.id === input.inheritFromNotificationId)
+          : [...series.filter((n) => n.filingCount === filingCount)].sort((a, b) => (b.changeCount ?? 0) - (a.changeCount ?? 0))[0]
+            ?? [...series].sort((a, b) => b.filingCount - a.filingCount)[0];
     if (from) {
       base.studyDrugs = clone(from.studyDrugs); // 順序番号（突合キー）ごと引き継ぐ
       base.protocolNo = from.protocolNo;

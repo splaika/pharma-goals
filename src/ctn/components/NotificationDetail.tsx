@@ -4,6 +4,8 @@ import { columnOf, requiredFor, shouldShow, isRequired } from "../schema";
 import {
   is30DayReview,
   computeDeadline,
+  changeTiming,
+  TIMING_LABEL,
   recommendKubun,
   canApprove,
   canSubmit,
@@ -292,7 +294,11 @@ export function NotificationDetail({
       {(draft.notifType === "plan" || draft.notifType === "change") && deadline && (
         <div className={`banner deadline ${du != null && du < 0 ? "banner-red" : du != null && du <= 7 ? "banner-red" : du != null && du <= 14 ? "banner-amber" : "banner-blue"}`}>
           <b>{t("Submission deadline", "提出期限")}: {fmtDate(deadline)}</b>
-          <span>{is30 ? t("30-day review (start −30d)", "30日調査対象（開始予定日−30日）") : t("standard (start −14d)", "通常（開始予定日−14日）")}</span>
+          <span>{
+            draft.notifType === "change"
+              ? (() => { const tm = changeTiming(draft.changeLocations); return tm ? t(`Timing: ${TIMING_LABEL[tm][0]}`, `提出時期: ${TIMING_LABEL[tm][1]}（変更予定日基準）`) : t("select change locations", "変更箇所を選択してください"); })()
+              : is30 ? t("first plan · 30-day review (start −30d)", "初回計画届・30日調査対象（開始予定日−30日）") : t("N-th plan (start −14d)", "N回届（開始予定日−14日）")
+          }</span>
           {du != null && <span className="banner-days">{du < 0 ? t(`${-du}d overdue`, `${-du}日超過`) : t(`${du} days left`, `残り${du}日`)}</span>}
         </div>
       )}
@@ -348,7 +354,7 @@ export function NotificationDetail({
         </div>
 
         {draft.notifType === "change" && (
-          <Field label={t("Change locations (drives kubun)", "変更箇所（区分推奨の入力）")} mark="always" wide>
+          <Field label={t("Change locations (drives kubun & submission timing)", "変更箇所（届出区分・提出時期の判定に使用）")} mark="always" wide>
             <div className="chips">
               {options(SET.changeLocations).map((o) => {
                 const on = draft.changeLocations.includes(o.value);

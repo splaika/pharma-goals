@@ -205,7 +205,7 @@ export const NOTIFICATIONS: Notification[] = [
 
   // (2) 治験計画変更届（分担医師の追加・削除 → イベント行自動生成・提出済）
   {
-    id: "nt-abc-2", compoundId: "cmp-abc", notifType: "change", filingCount: 2, changeCount: 1, kubun: KUBUN.k3,
+    id: "nt-abc-2", compoundId: "cmp-abc", notifType: "change", filingCount: 1, changeCount: 1, kubun: KUBUN.k3,
     receptNo: "R6薬第1234号", receptDate: "2026-06-12", plannedStartDate: "2026-05-01", noteDate: "2026-06-12", status: "submitted",
     changeLocations: [100000804], protocolNo: "ABC-123-001", phase: 100000602, trialType: 100000701,
     objectives: "関節リウマチ患者を対象としたABC-123の有効性及び安全性の検討", plannedSubjDrug: 120, plannedSubjTotal: 240, targetDisease: "関節リウマチ",
@@ -232,7 +232,7 @@ export const NOTIFICATIONS: Notification[] = [
 
   // (3) 治験終了届（数量列必須・承認済で提出待ち＝リマインダ）
   {
-    id: "nt-abc-3", compoundId: "cmp-abc", notifType: "completion", filingCount: 3, kubun: KUBUN.k3,
+    id: "nt-abc-3", compoundId: "cmp-abc", notifType: "completion", filingCount: 1, kubun: KUBUN.k3,
     receptNo: "R6薬第1234号", receptDate: "2028-04-05", noteDate: "2028-04-05", status: "approved",
     changeLocations: [], protocolNo: "ABC-123-001", objectives: "治験終了報告", plannedSubjDrug: 120, plannedSubjTotal: 240, targetDisease: "関節リウマチ",
     periodStart: "2026-05", periodEnd: "2028-03", isGlobal: false, sponsorId: "sp-1",
@@ -288,7 +288,7 @@ export const NOTIFICATIONS: Notification[] = [
     createdBy: "u-a", createdAt: "2026-01-10", reviewedBy: "u-b", approvedBy: "u-c", approvedAt: "2026-01-14", submittedAt: "2026-01-15", xmlGeneratedAt: "2026-01-15",
   },
   {
-    id: "nt-srp-2", compoundId: "cmp-srp", notifType: "change", filingCount: 2, changeCount: 1, kubun: KUBUN.k1,
+    id: "nt-srp-2", compoundId: "cmp-srp", notifType: "change", filingCount: 1, changeCount: 1, kubun: KUBUN.k1,
     receptNo: "R6薬第2210号", receptDate: "2026-04-10", plannedStartDate: "2026-02-01", noteDate: "2026-04-10", status: "submitted",
     changeLocations: [100000801], protocolNo: "SRP-204-01", phase: 100000600, trialType: 100000700,
     objectives: "対象疾患の追加（潰瘍性大腸炎に加えクローン病を追加）", plannedSubjDrug: 40, plannedSubjTotal: 40, targetDisease: "潰瘍性大腸炎、クローン病",
@@ -307,7 +307,7 @@ export const NOTIFICATIONS: Notification[] = [
   },
   // 下書き（起票中・提出期限接近＝アラート）。ユーザーが継続入力できる。
   {
-    id: "nt-srp-3", compoundId: "cmp-srp", notifType: "change", filingCount: 3, changeCount: 2, kubun: KUBUN.k2,
+    id: "nt-srp-3", compoundId: "cmp-srp", notifType: "change", filingCount: 1, changeCount: 2, kubun: KUBUN.k2,
     receptNo: "R6薬第2210号", receptDate: "", plannedStartDate: "2026-08-01", status: "draft",
     changeLocations: [100000803], protocolNo: "SRP-204-01", phase: 100000600, trialType: 100000700,
     objectives: "治験使用薬（併用薬）の追加", plannedSubjDrug: 40, plannedSubjTotal: 40, targetDisease: "潰瘍性大腸炎、クローン病",
@@ -345,7 +345,7 @@ export const NOTIFICATIONS: Notification[] = [
     createdBy: "u-a", createdAt: "2025-11-05", reviewedBy: "u-b", approvedBy: "u-c", approvedAt: "2025-11-09", submittedAt: "2025-11-10", xmlGeneratedAt: "2025-11-10",
   },
   {
-    id: "nt-klm-2", compoundId: "cmp-klm", notifType: "devDiscontinuation", filingCount: 2, kubun: KUBUN.k3,
+    id: "nt-klm-2", compoundId: "cmp-klm", notifType: "devDiscontinuation", filingCount: 1, kubun: KUBUN.k3,
     noteDate: "2026-06-25", status: "submitted", changeLocations: [], protocolNo: "KLM-330-101",
     terminationDate: "2026-06-20", terminationReason: "開発方針の見直しにより本剤の開発を中止する。", objectives: "開発中止報告",
     targetDisease: "非小細胞肺癌", isGlobal: false, sponsorId: "sp-1",
