@@ -64,11 +64,18 @@ export function Sidebar({ view, onNavigate, user, badges, collapsed, onToggleCol
           </a>
         ))}
       </nav>
-      <a className="hublink" href="https://splaika.github.io/ctn-prototype/" target="_blank" rel="noopener" title={collapsed ? t("Doc hub", "ドキュメントハブ") : undefined}>
+      {/* TODO: このリンクは将来「使い方マニュアル」へ差し替える。
+          マニュアルは仕様がある程度固まってから作成予定のため、現状は
+          準備中（非活性）のプレースホルダとして表示する。 */}
+      <button
+        className="hublink manual"
+        disabled
+        title={t("User manual — published once the spec is finalized", "使い方マニュアル（仕様確定後に公開予定）")}
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
-        <span>{t("Doc hub", "ドキュメントハブ")}</span>
-        <span className="ext">↗</span>
-      </a>
+        <span>{t("User manual", "使い方マニュアル")}</span>
+        <span className="ext">{t("soon", "準備中")}</span>
+      </button>
       <div className="sfoot">
         <div className="a">{user.initials}</div>
         <div>

@@ -645,7 +645,8 @@
 .app.theme-modern{
   --navy:#4f46e5; --blue:#6d5efc; --blue-soft:#eef0ff;
   --ink:#1e2233; --ink-2:#5a6072; --ink-3:#9aa0b4; --ink-4:#c3c8d6;
-  --line:#ecedf4; --line-2:#f5f6fb; --bg:#f6f7fb; --white:#fff; --surface:#fff;
+  /* gray canvas: --bg 10% darker; sidebar shares --bg; structural borders are white */
+  --line:#ffffff; --line-2:#e9ebf1; --bg:#dddee2; --white:#fff; --surface:#fff;
   --green:#10b981; --green-bg:#e7f7f0;
   --amber:#f59e0b; --amber-bg:#fdf1de;
   --red:#ef4444; --red-bg:#fdecec;
@@ -656,8 +657,8 @@
   --ty-plan:#6d5efc; --ty-change:#f59e0b; --ty-term:#ef4444; --ty-comp:#10b981; --ty-dev:#9aa0b4;
   background:var(--bg);
 }
-/* light sidebar */
-.app.theme-modern .side{background:var(--surface);color:var(--ink);border-right:1px solid var(--line)}
+/* sidebar shares the gray canvas; white line divides it from the content */
+.app.theme-modern .side{background:var(--bg);color:var(--ink);border-right:1px solid var(--line)}
 .app.theme-modern .brand b{color:var(--ink)}
 .app.theme-modern .brand span{color:var(--ink-3)}
 .app.theme-modern .brand .m{background:linear-gradient(135deg,#6d5efc,#a78bfa)}
@@ -683,66 +684,19 @@
 .app.theme-modern .lang button.on{background:var(--blue)}
 /* KPI numbers a touch softer */
 .app.theme-modern .kpi .v{letter-spacing:-.5px}
-/* header stays white, subtle */
-.app.theme-modern .top{border-bottom-color:var(--line)}
-
-/* ============================================================
-   CTN — COLOR VARIANT "Soft"  (lime accent, pastel canvas)
-   Shapes unchanged; only palette + a few component colors.
-   ============================================================ */
-.app.theme-soft{
-  --lime:#c7f24a; --lime-deep:#b6e63a;
-  --navy:#1b2130; --blue:#1b2130; --blue-soft:#eef7d2;
-  --ink:#1b2130; --ink-2:#5b6474; --ink-3:#97a0b0; --ink-4:#c3c9d3;
-  --line:#edeff4; --line-2:#f6f7fa; --bg:#eceff5; --white:#fff; --surface:#fff;
-  --green:#14b8a6; --green-bg:#e2f6f3;
-  --amber:#e79138; --amber-bg:#fdf0e1;
-  --red:#ef5f5f; --red-bg:#fdeaea;
-  --sh:0 1px 3px rgba(20,24,40,.05); --sh-2:0 20px 50px rgba(20,24,40,.14);
-  --r:18px;
-  --st-draft:#97a0b0; --st-review:#e79138; --st-approved:#14b8a6; --st-submitted:#3bb0c9;
-  --ty-plan:#7cc42e; --ty-change:#e79138; --ty-term:#ef5f5f; --ty-comp:#14b8a6; --ty-dev:#97a0b0;
-}
-/* soft pastel canvas behind the content cards */
-.app.theme-soft .scroll{
-  background:
-    radial-gradient(900px 420px at 0% 0%, #e7eeff 0%, rgba(231,238,255,0) 60%),
-    radial-gradient(760px 380px at 100% 4%, #fdeede 0%, rgba(253,238,222,0) 55%),
-    radial-gradient(820px 480px at 100% 100%, #e6f6e7 0%, rgba(230,246,231,0) 55%),
-    radial-gradient(760px 460px at 0% 100%, #f1e9ff 0%, rgba(241,233,255,0) 55%),
-    var(--bg);
-}
-/* light sidebar with lime active pills */
-.app.theme-soft .side{background:var(--surface);color:var(--ink);border-right:1px solid var(--line)}
-.app.theme-soft .brand b{color:var(--ink)}
-.app.theme-soft .brand span{color:var(--ink-3)}
-.app.theme-soft .brand .m{background:linear-gradient(135deg,#1b2130,#3a4256)}
-.app.theme-soft .collapse-btn:hover{background:var(--line-2)}
-.app.theme-soft .nav a{color:var(--ink-2);font-weight:600;border-radius:12px}
-.app.theme-soft .nav a:hover{background:var(--line-2);color:var(--ink)}
-.app.theme-soft .nav a.on{background:var(--lime);color:#1b2130}
-.app.theme-soft .nav a.on svg{opacity:1}
-.app.theme-soft .nav-badge{background:#ef5f5f;color:#fff}
-.app.theme-soft .nav a.on .nav-badge{background:#1b2130;color:var(--lime)}
-.app.theme-soft .sfoot{border-top-color:var(--line)}
-.app.theme-soft .sfoot .a{background:var(--lime);color:#1b2130}
-.app.theme-soft .sfoot .n{color:var(--ink)}
-.app.theme-soft .sfoot .r{color:var(--ink-3)}
-.app.theme-soft .hublink{color:var(--ink-3);border-color:var(--line)}
-.app.theme-soft .hublink:hover{background:var(--line-2);color:var(--ink)}
-/* rounder cards + lime primary/active accents */
-.app.theme-soft .kpi,.app.theme-soft .card,.app.theme-soft .sect,.app.theme-soft .filters,.app.theme-soft .series-card{border-radius:18px}
-.app.theme-soft .btn{border-radius:22px}
-.app.theme-soft .btn-p{background:var(--lime);color:#1b2130}
-.app.theme-soft .btn-p:hover{background:var(--lime-deep)}
-.app.theme-soft .tin,.app.theme-soft .ta,.app.theme-soft select.sel{border-radius:11px}
-.app.theme-soft .lang{border-radius:22px}
-.app.theme-soft .lang button.on{background:var(--lime);color:#1b2130}
-.app.theme-soft .chip.on{background:var(--lime);color:#1b2130;border-color:var(--lime)}
-.app.theme-soft .seg button.on{color:#1b2130}
-.app.theme-soft .kpi.hl{border-top-color:var(--lime)}
-.app.theme-soft .modal{border-radius:22px}
-.app.theme-soft .top{border-bottom-color:var(--line)}
+/* header shares the gray canvas with a white divider line */
+.app.theme-modern .top{background:var(--bg);border-bottom-color:var(--line)}
+/* structural borders are white, so keep form controls defined on white cards (light only) */
+.app.theme-modern:not(.mode-dark) .tin,
+.app.theme-modern:not(.mode-dark) .ta,
+.app.theme-modern:not(.mode-dark) select.sel,
+.app.theme-modern:not(.mode-dark) .btn-g,
+.app.theme-modern:not(.mode-dark) .icon-btn,
+.app.theme-modern:not(.mode-dark) .lang,
+.app.theme-modern:not(.mode-dark) .chip,
+.app.theme-modern:not(.mode-dark) .mtabs button,
+.app.theme-modern:not(.mode-dark) .type-card,
+.app.theme-modern:not(.mode-dark) .dropzone{border-color:#d8dbe2}
 
 /* ============================================================
    DARK MODE  (color axis, independent of the standard/modern theme)
@@ -762,9 +716,6 @@
 }
 /* modern's white sidebar → dark surface in dark mode (needs the extra class) */
 .app.mode-dark.theme-modern .side{background:var(--surface)}
-/* soft theme's light pastel canvas → flat dark in dark mode */
-.app.mode-dark.theme-soft .scroll{background:var(--bg)}
-.app.mode-dark.theme-soft .nav a.on{color:#182029}
 /* tinted hovers / alert & reminder cards keep their hue but go dark */
 .app.mode-dark .drugcard-h:hover{background:var(--line-2)}
 .app.mode-dark .grow:hover{background:#16222e}
@@ -800,3 +751,9 @@
 /* header dark/light toggle */
 .mode-toggle{flex:none}
 .mode-toggle svg{width:17px;height:17px}
+/* usage-manual placeholder (link repurposed later, after spec is finalized) */
+.hublink.manual{cursor:default;opacity:.72;gap:9px;padding:9px 11px}
+.hublink.manual:hover{background:transparent;color:inherit;border-color:inherit}
+.hublink.manual>span:not(.ext){white-space:nowrap;font-size:12px}
+.hublink.manual .ext{margin-left:auto;flex:none;font-size:9px;font-weight:700;letter-spacing:.02em;padding:1px 5px;border-radius:6px;background:var(--line-2);color:var(--ink-3)}
+.app.collapsed .hublink.manual .ext{display:none}
