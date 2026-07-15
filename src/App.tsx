@@ -220,16 +220,17 @@ export default function App() {
             )}
           </div>
         </div>
-      </div>
 
-      {wizard && <CreateWizard db={db} onClose={() => setWizard(false)} onSubmit={handleCreate} />}
-      {xmlFor && <XmlPreview notification={xmlFor} db={db} onClose={() => setXmlFor(null)} onGenerated={handleXmlGenerated} />}
+        {/* オーバーレイは .app の内側に置く（theme-modern の変数を継承させるため） */}
+        {wizard && <CreateWizard db={db} onClose={() => setWizard(false)} onSubmit={handleCreate} />}
+        {xmlFor && <XmlPreview notification={xmlFor} db={db} onClose={() => setXmlFor(null)} onGenerated={handleXmlGenerated} />}
 
-      <div className={`toast${toast ? " on" : ""}${toast?.err ? " toast-err" : ""}`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-          {toast?.err ? <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /> : <path d="M20 6 9 17l-5-5" />}
-        </svg>
-        <span>{toast?.msg}</span>
+        <div className={`toast${toast ? " on" : ""}${toast?.err ? " toast-err" : ""}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            {toast?.err ? <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /> : <path d="M20 6 9 17l-5-5" />}
+          </svg>
+          <span>{toast?.msg}</span>
+        </div>
       </div>
     </LangContext.Provider>
   );

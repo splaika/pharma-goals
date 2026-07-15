@@ -250,7 +250,7 @@ function InstForm({ rec, onClose, onSave }: { rec: Institution | null; onClose: 
         <Field label={t("Name", "機関名称")} mark="always"><input className="tin" value={v.name} onChange={on("name")} /></Field>
         <Field label={t("Tel", "代表電話番号")} mark="always"><input className="tin" value={v.telNo} onChange={on("telNo")} /></Field>
         <Field label={t("Address 1", "所在地1")} mark="always" wide><input className="tin" value={v.address1} onChange={on("address1")} /></Field>
-        <Field label={t("Address 2", "所在地2")} mark="optional" wide><input className="tin" value={v.address2} onChange={on("address2")} /></Field>
+        <Field label={t("Address 2", "所在地2")} mark="always" wide><input className="tin" value={v.address2} onChange={on("address2")} /></Field>
       </div>
     </Modal>
   );
@@ -285,7 +285,7 @@ function IrbForm({ rec, onClose, onSave }: { rec: Irb | null; onClose: () => voi
         <Field label={t("Type", "院内・外部の区分")} mark="always"><select className="sel" value={v.irbType} onChange={(e) => setV((s) => ({ ...s, irbType: Number(e.target.value) }))}>{options(SET.irbType).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
         <Field label={t("Owner name", "設置者の名称")} mark="always" wide><input className="tin" value={v.ownerName} onChange={on("ownerName")} /></Field>
         <Field label={t("Address 1", "所在地1")} mark="always" wide><input className="tin" value={v.address1} onChange={on("address1")} /></Field>
-        <Field label={t("Address 2", "所在地2")} mark="optional" wide><input className="tin" value={v.address2} onChange={on("address2")} /></Field>
+        <Field label={t("Address 2", "所在地2")} mark="always" wide><input className="tin" value={v.address2} onChange={on("address2")} /></Field>
       </div>
     </Modal>
   );
@@ -302,7 +302,7 @@ function SponsorForm({ rec, onClose, onSave }: { rec: Sponsor | null; onClose: (
         <Field label={t("Representative", "代表者の氏名")} mark="always"><input className="tin" value={v.repName} onChange={on("repName")} /></Field>
         <Field label={t("Manufacturer code", "業者コード")} mark="always"><input className="tin" value={v.manufacturerCode} onChange={on("manufacturerCode")} /></Field>
         <Field label={t("Address 1", "所在地1")} mark="always" wide><input className="tin" value={v.address1} onChange={on("address1")} /></Field>
-        <Field label={t("Address 2", "所在地2")} mark="optional" wide><input className="tin" value={v.address2} onChange={on("address2")} /></Field>
+        <Field label={t("Address 2", "所在地2")} mark="always" wide><input className="tin" value={v.address2} onChange={on("address2")} /></Field>
         <Field label={t("Contact name", "届出担当者の氏名")} mark="always"><input className="tin" value={v.contactName} onChange={on("contactName")} /></Field>
         <Field label={t("Contact title", "届出担当者の所属")} mark="always"><input className="tin" value={v.contactTitle} onChange={on("contactTitle")} /></Field>
         <Field label={t("Tel", "電話番号")} mark="always"><input className="tin" value={v.telNo} onChange={on("telNo")} /></Field>

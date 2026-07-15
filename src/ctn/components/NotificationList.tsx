@@ -124,7 +124,7 @@ export function NotificationsView({ db, onOpen }: { db: CtnDb; onOpen: (id: stri
       .filter((n) => fType === "all" || n.notifType === fType)
       .filter((n) => fStatus === "all" || n.status === fStatus)
       .filter((n) => !q || codeOf(n.compoundId).toLowerCase().includes(q.toLowerCase()) || n.protocolNo.toLowerCase().includes(q.toLowerCase()) || notifTypeName(n.notifType, lang).includes(q))
-      .sort((a, b) => (a.compoundId + a.filingCount).localeCompare(b.compoundId + b.filingCount));
+      .sort((a, b) => a.compoundId.localeCompare(b.compoundId) || a.filingCount - b.filingCount);
   }, [db, fType, fStatus, q, lang]);
 
   return (

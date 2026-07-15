@@ -162,7 +162,7 @@ export const NOTIFICATIONS: Notification[] = [
   // (1) 治験計画届（新規・30日調査対象・提出済）
   {
     id: "nt-abc-1", compoundId: "cmp-abc", notifType: "plan", filingCount: 1, kubun: KUBUN.k1,
-    subj30dayReview: 100000200, plannedStartDate: "2026-05-01", noteDate: "2026-03-25", status: "submitted",
+    subj30dayReview: 1, plannedStartDate: "2026-05-01", noteDate: "2026-03-25", status: "submitted",
     changeLocations: [], protocolNo: "ABC-123-001", phase: 100000602, trialType: 100000701,
     objectives: "関節リウマチ患者を対象としたABC-123の有効性及び安全性の検討（プラセボ対照無作為化二重盲検比較試験）",
     plannedSubjDrug: 120, plannedSubjTotal: 240, targetDisease: "関節リウマチ",
@@ -265,7 +265,7 @@ export const NOTIFICATIONS: Notification[] = [
   // -------- SRP-204 シリーズ（N回作成：計画→変更→変更（下書き）） --------
   {
     id: "nt-srp-1", compoundId: "cmp-srp", notifType: "plan", filingCount: 1, kubun: KUBUN.k1,
-    subj30dayReview: 100000200, plannedStartDate: "2026-02-01", noteDate: "2026-01-15", status: "submitted",
+    subj30dayReview: 1, plannedStartDate: "2026-02-01", noteDate: "2026-01-15", status: "submitted",
     changeLocations: [], protocolNo: "SRP-204-01", phase: 100000600, trialType: 100000700,
     objectives: "健康成人を対象としたSRP-204の薬物動態及び安全性の検討（第I相単回投与）", plannedSubjDrug: 40, plannedSubjTotal: 40, targetDisease: "潰瘍性大腸炎",
     periodStart: "2026-02", periodEnd: "2026-12", isGlobal: false, sponsorId: "sp-1",
@@ -324,7 +324,7 @@ export const NOTIFICATIONS: Notification[] = [
   // -------- KLM-330 シリーズ（開発中止） --------
   {
     id: "nt-klm-1", compoundId: "cmp-klm", notifType: "plan", filingCount: 1, kubun: KUBUN.k1,
-    subj30dayReview: 100000200, plannedStartDate: "2025-12-01", noteDate: "2025-11-10", status: "submitted",
+    subj30dayReview: 1, plannedStartDate: "2025-12-01", noteDate: "2025-11-10", status: "submitted",
     changeLocations: [], protocolNo: "KLM-330-101", phase: 100000600, trialType: 100000700,
     objectives: "非小細胞肺癌患者を対象としたKLM-330の第I相用量漸増試験", plannedSubjDrug: 30, plannedSubjTotal: 30, targetDisease: "非小細胞肺癌",
     periodStart: "2025-12", periodEnd: "2027-06", isGlobal: false, sponsorId: "sp-1",

@@ -16,6 +16,7 @@ import {
   SET,
   ATTACH_STATUS,
   COMB,
+  SUBJ30_OPTIONS,
   daysUntil,
   fmtDate,
   label,
@@ -330,7 +331,7 @@ export function NotificationDetail({
             <Field label={t("30-day review drug category", "30日調査対応被験薬区分")} mark={mk("cr_subj30dayreview")} unconfirmed>
               <select className="sel" value={draft.subj30dayReview ?? ""} disabled={!editable} onChange={(e) => set((n) => (n.subj30dayReview = e.target.value ? Number(e.target.value) : undefined))}>
                 <option value="">—</option>
-                {options(SET.kubun).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {SUBJ30_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Field>
           )}

@@ -105,6 +105,14 @@ export const ATTACH_STATUS = { attached: 100001300, checking: 100001301, optiona
 export const COMB = { subject: 100001100, control: 100001101, concomitant: 100001102, rescue: 100001103, other: 100001104 } as const;
 export const COMB_PLACEHOLDER = COMB.control; // プラセボ＝対照薬
 
+// 30日調査対応被験薬区分（cr_subj30dayreview）— コード表・「要確認」。
+// 手引き未確定のため、届出区分（SET.kubun）とは切り離した当項目専用の暫定値を定義する。
+export const SUBJ30_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "1（30日調査対応被験薬）" },
+  { value: 2, label: "2（通知該当被験薬）" },
+  { value: 3, label: "3（その他）" },
+];
+
 // ============================================================================
 // デモ利用者（Entra ID の代替。職務分離＝起票者≠承認者 の検証に使用）
 // ============================================================================

@@ -65,7 +65,7 @@ export function Dashboard({ db, onOpen, onNavigate }: { db: CtnDb; onOpen: (id: 
           <button className="btn btn-g btn-sm" onClick={() => onNavigate("notifications")}>{t("Open list", "一覧を開く")} →</button>
         </div>
         <div className="sect-b nopad">
-          <NotificationTable db={db} notifications={[...db.notifications].sort((a, b) => (a.compoundId + a.filingCount).localeCompare(b.compoundId + b.filingCount))} onOpen={onOpen} />
+          <NotificationTable db={db} notifications={[...db.notifications].sort((a, b) => a.compoundId.localeCompare(b.compoundId) || a.filingCount - b.filingCount)} onOpen={onOpen} />
         </div>
       </div>
 
